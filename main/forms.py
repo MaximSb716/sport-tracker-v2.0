@@ -28,7 +28,6 @@ class SignInForm(AuthenticationForm):
 class NewVotingForm(forms.Form):
     """Создание нового голосования."""
     about_label = forms.CharField(label="Напиши заголовок голосования", max_length=100)
-    about_description = forms.CharField(label="Опиши о чём голосование", max_length=500)
     image = forms.ImageField(label="Добавь изображение!")
     questions_count = forms.IntegerField(label="questions_count")
 

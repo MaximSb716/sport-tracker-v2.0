@@ -15,17 +15,21 @@ def index1(request):
 def about_us(request):
     context = {}
     return render(request, 'about_us.html', context)
-
+def applications(request):
+    context = {}
+    return render(request, 'applications.html', context)
 def catalog(request):
     categories = Votings.objects.all()
     context = {"categories": categories}
     data = []
     for category in categories:
-        directory = f"main/uploads/votings/{category.id}"
+        directory = f"main/uploads/votings/admin/{category.id}"
         url_to_header = ""
         if len(os.listdir(directory)) != 0:
-            url_to_header = f"/uploads/votings/{category.id}/{os.listdir(directory)[0]}"
-        data.append({"category" : category, "url_to_header" : url_to_header})
+            url_to_header = f"/uploads/votings/admin/{category.id}/{os.listdir(directory)[0]}"
+        data.append({"category": category, "url_to_header": url_to_header})
+
+
     context["data"] = data
     if request.method == 'GET':
         sku = request.GET.get('sku')
@@ -34,8 +38,13 @@ def catalog(request):
     return render(request, 'catalog.html', context)
 
 def profile(request):
-    context = {"is_auth": False}
-    if request.user.is_authenticated:
+    context = {
+        "is_auth": False,
+        "is_admin": False,
+    }
+    if request.user.is_superuser:
+        context["is_admin"] = True
+    if request.user.is_authenticated and (not request.user.is_superuser):
         context["is_auth"] = True
         directory = f"main/uploads/users/{request.user.id}"
         context["url_to_avatar"] = ""
@@ -50,6 +59,24 @@ def profile(request):
                 f = request.FILES["image"]
                 extension = os.path.splitext(str(f))[1]
                 with open(f"main/uploads/users/{request.user.id}/avatar{extension}", "wb+") as sv:
+                    sv.write(f.read())
+                return redirect("/profile")
+
+    if request.user.is_authenticated and  request.user.is_superuser:
+        context["is_auth"] = True
+        directory = f"main/uploads/users/admin"
+        context["url_to_avatar"] = ""
+        if len(os.listdir(directory)) != 0:
+            context["url_to_avatar"] = f"/uploads/users/admin/{os.listdir(directory)[0]}"
+        context["form"] = UploadImageForm()
+        if request.method == "POST":
+            form = UploadImageForm(request.POST, request.FILES)
+            if form.is_valid():
+                shutil.rmtree(directory)
+                os.mkdir(directory)
+                f = request.FILES["image"]
+                extension = os.path.splitext(str(f))[1]
+                with open(f"main/uploads/users/admin/avatar{extension}", "wb+") as sv:
                     sv.write(f.read())
                 return redirect("/profile")
     return render(request, 'profile.html', context)
@@ -121,7 +148,7 @@ def votings(request):
 
 def new_voting(request):
     context = {"is_auth" : False}
-    if request.user.is_authenticated:
+    if request.user.is_authenticated and  request.user.is_authenticated:
         context["is_auth"] = True
         if request.method == "POST":
             form = NewVotingForm(request.POST, request.FILES)
@@ -131,7 +158,6 @@ def new_voting(request):
                 voting = Votings(
                     author=request.user,
                     name=data.get("about_label"),
-                    description=data.get("about_description"),
                     questions_number=data.get("questions_count")
                 )
                 voting.save()
@@ -149,7 +175,7 @@ def new_voting(request):
                             answer=data.get(f"option{i}_{j}")
                         )
                         answer.save()
-                directory = f"main/uploads/votings/{voting.id}"
+                directory = f"main/uploads/votings/admin/{voting.id}"
                 os.makedirs(directory)
                 f = request.FILES["image"]
                 extension = os.path.splitext(str(f))[1]
@@ -160,7 +186,6 @@ def new_voting(request):
                 print("INVALID")
         else:
             context["form"] = NewVotingForm()
-
 
     return render(request, "new_voting.html", context)
 
@@ -188,7 +213,6 @@ def voting(request):
         if (len(_voting) != 0):
             context["IsExist"] = True
             context["about_label"] = _voting[0].name
-            context["about_description"] = _voting[0].description
             context["author"] = _voting[0].author
             context["voting_id"] = _voting[0].id
             _questions = Questions.objects.filter(voting=_voting[0])
@@ -197,17 +221,16 @@ def voting(request):
             for quest in _questions:
                 i += 1
                 data.append({"questions" : quest, "answers" : Answers.objects.filter(question=quest)})
-            
+
             context["data"] = data
 
-            directory = f"main/uploads/users/{_voting[0].author.id}"
+            directory = f"main/uploads/users/admin"
             context["url_to_avatar"] = ""
             if len(os.listdir(directory)) != 0:
-                context["url_to_avatar"] = f"/uploads/users/{_voting[0].author.id}/{os.listdir(directory)[0]}"
-            directory = f"main/uploads/votings/{_voting[0].id}"
+                context["url_to_avatar"] = f"/uploads/users/admin/{os.listdir(directory)[0]}"
+            directory = f"main/uploads/votings/admin/{_voting[0].id}"
             context["url_to_header"] = ""
-            if len(os.listdir(directory)) != 0:
-                context["url_to_header"] = f"/uploads/votings/{_voting[0].id}/{os.listdir(directory)[0]}"
+            context["url_to_header"] = f"/uploads/votings/admin/{_voting[0].id}/{os.listdir(directory)[0]}"
         else:
             print("Not Founded")
     else:
@@ -281,14 +304,16 @@ def result(request):
     return render(request, 'result.html', context)
 
 def delete_voting(request):
-    context = {"IsExist" : False}
+    context = {
+        "IsExist" : False
+    }
     id_of_page = request.GET.get("id", "not founded")
     if request.method == "POST" and request.user.is_authenticated:
         _id = request.POST.get("voting_id")
         _voting = Votings.objects.filter(id=_id)
         if (len(_voting) != 0):
-            if _voting[0].author == request.user:
-                shutil.rmtree(f"main/uploads/votings/{_voting[0].id}")
+            if request.user.is_superuser:
+                shutil.rmtree(f"main/uploads/votings/admin/{_voting[0].id}")
                 _voting[0].delete()
         return redirect("/catalog")
 
@@ -310,14 +335,10 @@ def delete_voting(request):
                 data.append({"questions" : quest, "answers" : Answers.objects.filter(question=quest)})
             
             context["data"] = data
-            directory = f"main/uploads/users/{_voting[0].author.id}"
-            context["url_to_avatar"] = ""
-            if len(os.listdir(directory)) != 0:
-                context["url_to_avatar"] = f"/uploads/users/{_voting[0].author.id}/{os.listdir(directory)[0]}"
-            directory = f"main/uploads/votings/{_voting[0].id}"
-            context["url_to_header"] = ""
-            if len(os.listdir(directory)) != 0:
-                context["url_to_header"] = f"/uploads/votings/{_voting[0].id}/{os.listdir(directory)[0]}"
+            directory = f"main/uploads/users/admin"
+            context["url_to_avatar"] = f"/uploads/users/admin/{os.listdir(directory)[0]}"
+            directory = f"main/uploads/votings/admin/{_voting[0].id}"
+            context["url_to_header"] = f"/uploads/votings/admin/{_voting[0].id}/{os.listdir(directory)[0]}"
             
         else:
             print("Not Founded")
