@@ -35,3 +35,5 @@ Linux (VSC):
 * Apply migrations ``python manage.py migrate``
 
 * Run server ``python manage.py runserver``
+
+* Your project will be in ``127.0.0.1:8000``
