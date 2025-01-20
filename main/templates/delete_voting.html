@@ -1,0 +1,75 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'survey.css' %}">
+    <link rel="stylesheet" href="{% static 'profile.css' %}">
+    <link rel="stylesheet" href="{% static 'header.css' %}">
+    <title>Homepage</title>
+    <link rel="icon" href="{% static 'img/icon.svg' %}" type="image/svg+xml">
+    <style>
+        .wrapper {
+          width: auto;
+          height: 300px;
+          border: 2px solid #515151;
+        }
+        .exmpl {
+          overflow: hidden;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+        }
+        .exmpl img {
+          height: auto;
+          width: 100%;
+        }
+      </style>
+</head>
+{% include 'header.html' %}
+<body>
+    <div class="container">
+    <div class="item">
+        <div class="card">
+        <h2>Вы действительно хотите удалить следующее голосование?</h2>
+        <form method="post">
+            {% csrf_token %}
+            <input hidden name="voting_id" value="{{ voting_id }}">
+            <button type="submit" class="card_link">УДАЛИТЬ</button>
+        </form>
+    </div>
+    <div class="wrapper exmpl"><img src="{{ url_to_header }}" alt="Аватар пользователя"></div>
+      <div class="card">
+        {% if IsExist %}
+        <h3>{{ about_label }}</h3>
+        <img src="{{ url_to_avatar }}" alt="Аватар пользователя" class="profile-avatar">
+        Автор: {{ author }}
+        <p>{{ about_description }}</p>
+            {% for i in data %}
+            <div class="question">
+                <p>{{ i.questions.question }}</p>
+                <div class="options_cards">
+                {% if i.questions.type_of_voting == "one" %}
+                    {% for ans in i.answers %}
+                        <label><input type="radio" name="{{i.questions.id}}" value="{{ ans.id }}"> {{ ans.answer }}</label><br>
+                    {% endfor %}
+                {% else %}
+                    {% for ans in i.answers %}
+                        <label><input type="checkbox" name="{{i.questions.id}}" value="{{ ans.id }}"> {{ ans.answer }}</label><br>
+                    {% endfor %}
+                {% endif %}
+                </div>
+            {% endfor %}
+        {% else %}
+        <h3>Голосование не найдено!</h3>
+        {% endif %}
+      </div>
+    </div>
+</div>
+
+</body>
+<footer>
+</footer>
+
+</html>

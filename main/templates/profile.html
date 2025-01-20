@@ -1,0 +1,75 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'profile.css' %}">
+    <link rel="stylesheet" href="{% static 'header.css' %}">
+    <title>Homepage</title>
+    <link rel="icon" href="{% static 'img/icon.svg' %}" type="image/svg+xml">
+</head>
+{% include 'header.html' %}
+{% if is_auth %}
+<body>
+  <div class="profile-container">
+    <div class="profile-header">
+        <img src="{{ url_to_avatar }}" alt="Аватар пользователя" class="profile-avatar">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="profile-avatar-actions">
+              {{ form.as_p  }}
+                <button for="avatar-upload" class="profile-change-avatar">Сменить аватар</button>
+            </div>
+            <a class="profile-create" href="{% url 'voting/new' %}">Создать голосование</a>
+        </form>
+      </div>
+    <div class="profile-content">
+      <div class="profile-info">
+        <h2>Личная информация</h2>
+        <ul>
+          <li>
+            <strong>Login:</strong>
+            <span class="profile-email">{{ request.user }}</span>
+          </li>
+          <li>
+             <strong>Пароль:</strong>
+            <span class="profile-password">********</span>
+          </li>
+          <a class="exit" href="{% url 'sign_out' %}">Выйти</a>
+        </ul>
+
+      </div>
+    </div>
+  </div>
+   <script>
+        let avatarBase64 = null;
+
+        document.getElementById('avatar-upload').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                const avatarImg = document.querySelector('.profile-avatar');
+                avatarImg.src = e.target.result;
+                avatarBase64 = e.target.result;
+            };
+
+            if (file) {
+                reader.readAsDataURL(file);
+            }
+        });
+
+    </script>
+</body>
+{% else %}
+<body>
+    <div class="about_us_conteiner">
+        <h2>У вас нет профиля, пожалуйста, войдите в аккаунт</h2>
+    </div>
+</body>
+{% endif %}
+<footer>
+</footer>
+
+</html>

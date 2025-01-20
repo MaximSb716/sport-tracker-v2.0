@@ -1,0 +1,38 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+    <link rel="stylesheet" href="{% static 'header.css' %}">
+    <title>Homepage</title>
+    <link rel="icon" href="{% static 'img/icon.svg' %}" type="image/svg+xml">
+</head>
+{% include 'header.html' %}
+
+<body>
+<div class="body_main">
+    <div class="info_main">
+        Поделись своим мнение со всем миром
+    </div>
+    <div class="info_sl">
+        Вам не нужно быть экспертом в компьютерах, чтобы проголосовать на нашей платформе.
+        Мы создали интуитивно понятный интерфейс, с которым справится каждый. Крупные кнопки, четкий шрифт и простая навигация
+        – мы позаботились обо всем, чтобы сделать процесс голосования максимально комфортным.
+        <img class="main_img" src="{% static 'img/logo.png' %}">
+    </div>
+</div>
+</body>
+    
+<footer>
+</footer>
+
+</html>
+
+
+
+
+
+
+
