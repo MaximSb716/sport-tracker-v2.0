@@ -37,3 +37,26 @@ Linux (VSC):
 * Run server ``python manage.py runserver``
 
 * Your project will be in ``127.0.0.1:8000``
+
+Linux (PyCharm):
+* Скачать архив
+  
+* Установить Python 3.11.4
+
+* Открыть в PyCharm
+
+* Выбрать интерпритатор
+
+* Создать venv
+  
+* Right-click on Terminal
+
+* Install Lib ``pip install Django`` ``pip install Pillow``
+  
+* Make migrations ``python manage.py makemigrations``
+
+* Apply migrations ``python manage.py migrate``
+
+* Run server ``python manage.py runserver``
+
+* Your project will be in ``127.0.0.1:8000``
