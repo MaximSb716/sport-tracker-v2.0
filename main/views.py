@@ -15,10 +15,15 @@ def index1(request):
 def about_us(request):
     context = {}
     return render(request, 'about_us.html', context)
-
+def applications(request):
+    context = {}
+    return render(request, 'applications.html', context)
 def catalog(request):
     categories = Votings.objects.all()
-    context = {"categories": categories}
+
+    context = {
+        "categories": categories,
+    }
     data = []
     for category in categories:
         directory = f"main/uploads/votings/admin/{category.id}"
@@ -156,7 +161,6 @@ def new_voting(request):
                 voting = Votings(
                     author=request.user,
                     name=data.get("about_label"),
-                    description=data.get("about_description"),
                     questions_number=data.get("questions_count")
                 )
                 voting.save()
@@ -212,7 +216,6 @@ def voting(request):
         if (len(_voting) != 0):
             context["IsExist"] = True
             context["about_label"] = _voting[0].name
-            context["about_description"] = _voting[0].description
             context["author"] = _voting[0].author
             context["voting_id"] = _voting[0].id
             _questions = Questions.objects.filter(voting=_voting[0])

@@ -33,7 +33,7 @@
           <div class="wrapper exmpl"><img src="{{ category.url_to_header }}" alt="Шапка опроса"></div>
           <div class="card">
             <h3>{{category.category.name}}</h3>
-            <p>{{category.category.description}}</p>
+            <p>{{category.category.questions_number }}</p>
             <a class="card_link" href="{% url 'voting'%}?id={{category.category.id}}">Learn more</a>
           </div>
         </div>

@@ -21,10 +21,6 @@
                 <input type="text" name="about_label" maxlength="100" required id="id_about_label">
             </div>
             <div>
-                <p><b>Опиши о чём голосование</b></p>
-                <input type="text" name="about_description" maxlength="500" required id="id_about_description">
-            </div>
-            <div>
                 <p><b>Добавь изображение</b></p>
                 <input type="file" name="image" required id="id_image" accept="image/*">
             </div>
@@ -35,20 +31,22 @@
             <div id="Questions">
                 <div id="Question0">
                     <div>
-                        <p><b>Напиши вопрос №1</b></p>
+                        <!--<p><b>Напиши вопрос №1</b></p>
                         <input type="text" name="question0" maxlength="500" required placeholder="Вопрос">
+                        -->
                         <p><b>Выбери тип голосования</b></p>
                         <input type="radio" name="type_question0" maxlength="500" required value="one" id="one" checked>
                         <label for="one">Одиночный</label>
                         <input type="radio" name="type_question0" maxlength="500" required value="multi" id="multi">
                         <label for="multi">Множественный</label>
-                        <p><b>Выбери колличество вариантов ответа</b></p>
+                        <!--<p><b>Выбери колличество вариантов ответа</b></p>
                         <input type="number" name="options_count0" min="1" max="20" required id="id_options_count0" onchange="OnChangeAnswersCount(0)" value="2">
+                        -->
                     </div>
-                    <div id="Answers0">
+                    <!--<div id="Answers0">
                         <p><input type="text" name="option0_0" maxlength="70" size="70" placeholder="Вариант 1" required></p>
                         <p><input type="text" name="option0_1" maxlength="70" size="70" placeholder="Вариант 2" required></p>
-                    </div>
+                    </div>-->
                 </div>
                 <div id="Question1"></div>
                 <div id="Question2"></div>
@@ -65,6 +63,7 @@
         </form>
     </div>
 </body>
+<!--
 <script>
 let questions_value = 1
 const AnswersCount = [2]
@@ -109,6 +108,7 @@ function NewQuestion(id){
     return '<div><p><b>Напиши вопрос №'+(id+1)+'</b></p><input type="text" name="question'+id+'" maxlength="500" required placeholder="Вопрос"><p><b>Выбери тип голосования</b></p><input type="radio" name="type_question'+id+'" maxlength="500" required value="one" id="one'+id+'" checked><label for="one'+id+'">Одиночный</label><input type="radio" name="type_question'+id+'" maxlength="500" required value="multi" id="multi'+id+'"><label for="multi'+id+'">Множественный</label><p><b>Выбери колличество вариантов ответа</b></p><input type="number" name="options_count'+id+'" min="1" max="20" required id="id_options_count'+id+'" onchange="OnChangeAnswersCount('+id+')" value="2"></div><div id="Answers'+id+'"><p><input type="text" name="option'+id+'_0" maxlength="70" size="70" placeholder="Вариант 1" required></p><p><input type="text" name="option'+id+'_1" maxlength="70" size="70" placeholder="Вариант 2" required></p></div>';
 }
 </script>
+-->
 {% else %}
 <body>
     <div class="about_us_conteiner">
