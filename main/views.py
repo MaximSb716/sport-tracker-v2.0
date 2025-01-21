@@ -23,7 +23,10 @@ def catalog(request):
 
     context = {
         "categories": categories,
+        "is_admin": False,
     }
+    if request.user.is_superuser:
+        context["is_admin"] = True
     data = []
     for category in categories:
         directory = f"main/uploads/votings/admin/{category.id}"
