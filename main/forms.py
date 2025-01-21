@@ -44,7 +44,7 @@ class NewVotingForm(forms.Form):
             if not 1 <= len(str(cleaned_data[f"question{i}"])) <= 500:
                 raise ValidationError(f"Недопустимое содержание вопроса {i}!")
 
-            if validate_slug(cleaned_data.get(f"type_question{i}")) or not (cleaned_data.get(f"type_question{i}") == "one" or cleaned_data.get(f"type_question{i}") == "multi"):
+            if validate_slug(cleaned_data.get(f"type_question{i}")) or not (cleaned_data.get(f"type_question{i}") == "end" or cleaned_data.get(f"type_question{i}") == "one" or cleaned_data.get(f"type_question{i}") == "multi"):
                 raise ValidationError(f"Недопустимое содержание выбора типа вопроса {i}!")
 
             if validate_integer(cleaned_data.get(f"options_count{i}")) or not (1 <= int(cleaned_data.get(f"options_count{i}")) <= 20):
@@ -58,34 +58,25 @@ class NewVotingForm(forms.Form):
                     raise ValidationError(f"Недопустимое содержание ответа {i}_{j}!")
 
 
-class VotingForm(forms.Form):
-    """Форма с голосом пользователя"""
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    def clean(self):
-        cleaned_data = super().clean()
-
-        voting = Votings.objects.filter(id=self.data.POST["voting_id"])
-        if len(voting) == 0:
-            print("Голосование не найдено!")
-            raise ValidationError("Голосование не найдено!")
-        
-        cleaned_data["voting_id"] = voting[0].id
-        questions = Questions.objects.filter(voting=voting[0])
-        cleaned_data["questions"] = questions
-        data = dict(self.data.POST)
-        cleaned_data["answers"] = []
-        for quest in questions:
-            if str(quest.id) in data:
-                print("Yep, this's exist!")
-                answers = Answers.objects.filter(question=quest)
-                for ans in answers:
-                    if str(ans.id) in data[str(quest.id)]:
-                        cleaned_data["answers"].append(ans)
-            else:
-                print("Nope, question like this user is not answered!")
+# class VotingForm(forms.Form):
+#     """Форма с голосом пользователя"""
+#
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+#
+#     def clean(self):
+#         cleaned_data = super().clean()
+#
+#         voting = Votings.objects.filter(id=self.data.POST["voting_id"])
+#         if len(voting) == 0:
+#             print("Голосование не найдено!")
+#             raise ValidationError("Голосование не найдено!")
+#
+#         cleaned_data["voting_id"] = voting[0].id
+#         questions = Questions.objects.filter(voting=voting[0])
+#         cleaned_data["questions"] = "questions"
+#         data = dict(self.data.POST)
+#         cleaned_data["answers"] = []
 
 class UploadImageForm(forms.Form):
     """Форма для загрузки изображений"""

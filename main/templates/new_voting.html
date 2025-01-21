@@ -26,7 +26,7 @@
             </div>
             <div>
                 <p><b>Выбери колличество инвентаря</b></p>
-                <input type="number" name="questions_count" required id="id_questions_count" min="1" max="10" onchange="OnChangeQuestionsCount()" value="1">
+                <input type="number" name="questions_count" required id="id_questions_count" min="1" max="100" onchange="OnChangeQuestionsCount()" value="1">
             </div>
             <div id="Questions">
                 <div id="Question0">
@@ -39,6 +39,8 @@
                         <label for="one">Новый</label>
                         <input type="radio" name="type_question0" maxlength="500" required value="multi" id="multi">
                         <label for="multi">Использованный</label>
+                        <input type="radio" name="type_question0" maxlength="500" required value="end" id="end">
+                        <label for="end">Сломанный</label>
                         <!--<p><b>Выбери колличество вариантов ответа</b></p>
                         <input type="number" name="options_count0" min="1" max="20" required id="id_options_count0" onchange="OnChangeAnswersCount(0)" value="2">
                         -->

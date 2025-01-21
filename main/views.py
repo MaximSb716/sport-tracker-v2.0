@@ -4,7 +4,7 @@ from django.contrib.messages import constants as messages
 from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_exempt
 import random, os, shutil
-from main.forms import SignInForm, SignUpForm, NewVotingForm, VotingForm, UploadImageForm
+from main.forms import *
 from main.models import Votings, Questions, Answers, User_answer
 # Create your views here.
 
@@ -161,23 +161,24 @@ def new_voting(request):
                 voting = Votings(
                     author=request.user,
                     name=data.get("about_label"),
-                    questions_number=data.get("questions_count")
+                    questions_number=data.get("questions_count"),
+                    type_of_voting=data.get("type_question0")
                 )
                 voting.save()
-                for i in range(int(data.get("questions_count"))):
-                    question = Questions(
-                        voting=voting,
-                        question=data.get(f"question{i}"),
-                        type_of_voting=data.get(f"type_question{i}"),
-                        user_vote_amount=0
-                    )
-                    question.save()
-                    for j in range(int(data.get(f"options_count{i}"))):
-                        answer = Answers(
-                            question=question,
-                            answer=data.get(f"option{i}_{j}")
-                        )
-                        answer.save()
+                # for i in range(int(data.get("questions_count"))):
+                #     question = Questions(
+                #         voting=voting,
+                #         question=data.get(f"question{i}"),
+                #         type_of_voting=data.get(f"type_question{i}"),
+                #         user_vote_amount=0
+                #     )
+                #     question.save()
+                #     for j in range(int(data.get(f"options_count{i}"))):
+                #         answer = Answers(
+                #             question=question,
+                #             answer=data.get(f"option{i}_{j}")
+                #         )
+                #         answer.save()
                 directory = f"main/uploads/votings/admin/{voting.id}"
                 os.makedirs(directory)
                 f = request.FILES["image"]
