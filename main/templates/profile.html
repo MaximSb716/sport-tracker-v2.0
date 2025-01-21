@@ -21,10 +21,7 @@
               {{ form.as_p  }}
                 <button for="avatar-upload" class="profile-change-avatar">Сменить аватар</button>
             </div>
-            {% if is_admin %}
             <a class="profile-create" href="{% url 'voting/new' %}">Создать голосование</a>
-            {% else %}
-            {% endif %}
         </form>
       </div>
     <div class="profile-content">

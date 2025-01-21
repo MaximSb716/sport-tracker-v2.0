@@ -33,14 +33,20 @@
           <div class="wrapper exmpl"><img src="{{ category.url_to_header }}" alt="Шапка опроса"></div>
           <div class="card">
             <h3>{{category.category.name}}</h3>
-            <p>{{category.category.description}}</p>
-            <a class="card_link" href="{% url 'voting'%}?id={{category.category.id}}">Learn more</a>
+            <p>{{category.category.questions_number }}</p>
+             {% if category.category.type_of_voting == "one" %}
+                <p>Новый</p>
+              {% elif category.category.type_of_voting == "multi" %}
+                <p>Использованный</p>
+              {% else %}
+                <p>Сломанный</p>
+              {% endif %}
+            <a class="card_link" href="{% url 'voting'%}?id={{category.category.id}}">Добавить в заявку</a>
           </div>
         </div>
         {% endfor %}
     </div>
-</body>    
+</body>
 <footer>
 </footer>
-
 </html>

@@ -4,7 +4,7 @@ from django.contrib.messages import constants as messages
 from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_exempt
 import random, os, shutil
-from main.forms import SignInForm, SignUpForm, NewVotingForm, VotingForm, UploadImageForm
+from main.forms import *
 from main.models import Votings, Questions, Answers, User_answer
 # Create your views here.
 
@@ -15,10 +15,15 @@ def index1(request):
 def about_us(request):
     context = {}
     return render(request, 'about_us.html', context)
-
+def applications(request):
+    context = {}
+    return render(request, 'applications.html', context)
 def catalog(request):
     categories = Votings.objects.all()
-    context = {"categories": categories}
+
+    context = {
+        "categories": categories,
+    }
     data = []
     for category in categories:
         directory = f"main/uploads/votings/admin/{category.id}"
@@ -156,24 +161,24 @@ def new_voting(request):
                 voting = Votings(
                     author=request.user,
                     name=data.get("about_label"),
-                    description=data.get("about_description"),
-                    questions_number=data.get("questions_count")
+                    questions_number=data.get("questions_count"),
+                    type_of_voting=data.get("type_question0")
                 )
                 voting.save()
-                for i in range(int(data.get("questions_count"))):
-                    question = Questions(
-                        voting=voting,
-                        question=data.get(f"question{i}"),
-                        type_of_voting=data.get(f"type_question{i}"),
-                        user_vote_amount=0
-                    )
-                    question.save()
-                    for j in range(int(data.get(f"options_count{i}"))):
-                        answer = Answers(
-                            question=question,
-                            answer=data.get(f"option{i}_{j}")
-                        )
-                        answer.save()
+                # for i in range(int(data.get("questions_count"))):
+                #     question = Questions(
+                #         voting=voting,
+                #         question=data.get(f"question{i}"),
+                #         type_of_voting=data.get(f"type_question{i}"),
+                #         user_vote_amount=0
+                #     )
+                #     question.save()
+                #     for j in range(int(data.get(f"options_count{i}"))):
+                #         answer = Answers(
+                #             question=question,
+                #             answer=data.get(f"option{i}_{j}")
+                #         )
+                #         answer.save()
                 directory = f"main/uploads/votings/admin/{voting.id}"
                 os.makedirs(directory)
                 f = request.FILES["image"]
@@ -212,7 +217,6 @@ def voting(request):
         if (len(_voting) != 0):
             context["IsExist"] = True
             context["about_label"] = _voting[0].name
-            context["about_description"] = _voting[0].description
             context["author"] = _voting[0].author
             context["voting_id"] = _voting[0].id
             _questions = Questions.objects.filter(voting=_voting[0])
@@ -248,60 +252,6 @@ def survey(request):
     context = {}
     return render(request, 'survey.html', context)
 
-def result(request):
-    # Example hardcoded data // Thanks from D1964❤
-
-    context = {"IsExist" : False}
-    id_of_page = request.GET.get("id", "not founded")
-
-    if id_of_page != "not founded":
-        _voting = Votings.objects.filter(id=id_of_page)
-        if (len(_voting) != 0):
-            context["IsExist"] = True
-            context["about_label"] = _voting[0].name
-            context["about_description"] = _voting[0].description
-            context["author"] = _voting[0].author
-            context["data"] = []
-
-            questions = Questions.objects.filter(voting=_voting[0])
-            
-            for question in questions:
-                vote_counts = []
-                answers = Answers.objects.filter(question=question)
-                
-                for answer in answers:
-                    vote_counts.append( {"choice" : answer.answer, "count" : len(User_answer.objects.filter(answer=answer)), "id" : answer.id} )
-
-                if question.type_of_voting == "one":
-                    total_votes = sum(vote['count'] for vote in vote_counts)
-
-                elif question.type_of_voting == "multi":
-                    total_votes = question.user_vote_amount
-
-                
-                results = []
-                if total_votes > 0:
-                    for vote in vote_counts:
-                        results.append({"percentage" : (vote['count'] / total_votes) * 100, "choice" : vote["choice"], "count" : vote["count"]})
-                
-                _question = {"results" : results, "question" : question}
-            
-                context["data"].append(_question)
-                directory = f"main/uploads/users/{_voting[0].author.id}"
-                context["url_to_avatar"] = ""
-                if len(os.listdir(directory)) != 0:
-                    context["url_to_avatar"] = f"/uploads/users/{_voting[0].author.id}/{os.listdir(directory)[0]}"
-                directory = f"main/uploads/votings/{_voting[0].id}"
-                context["url_to_header"] = ""
-                if len(os.listdir(directory)) != 0:
-                    context["url_to_header"] = f"/uploads/votings/{_voting[0].id}/{os.listdir(directory)[0]}"
-        else:
-            return redirect("/catalog")
-    else:
-        return redirect("/catalog")
-
-
-    return render(request, 'result.html', context)
 
 def delete_voting(request):
     context = {
@@ -324,7 +274,6 @@ def delete_voting(request):
                 return redirect("/catalog")
             context["IsExist"] = True
             context["about_label"] = _voting[0].name
-            context["about_description"] = _voting[0].description
             context["author"] = _voting[0].author
             context["voting_id"] = _voting[0].id
             _questions = Questions.objects.filter(voting=_voting[0])

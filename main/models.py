@@ -7,9 +7,8 @@ class Votings(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     image = models.ImageField()
     name = models.TextField()
-    description = models.TextField()
     questions_number = models.IntegerField()
-
+    type_of_voting = models.TextField()
 
 class Questions(models.Model):
     voting = models.ForeignKey(Votings, on_delete=models.CASCADE)
