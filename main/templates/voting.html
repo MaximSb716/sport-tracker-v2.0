@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{% static 'survey.css' %}">
     <link rel="stylesheet" href="{% static 'profile.css' %}">
+    <link rel="stylesheet" href="{% static 'about_us.css' %}">
     <link rel="stylesheet" href="{% static 'header.css' %}">
     <title>Homepage</title>
     <link rel="icon" href="{% static 'img/icon.svg' %}" type="image/svg+xml">
@@ -33,38 +34,49 @@
       <div class="wrapper exmpl"><img src="{{ url_to_header }}" alt="Шапка опроса"></div>
       <div class="card">
         {% if IsExist %}
-        <h3>{{ about_label }}</h3>
-        <img src="{{ url_to_avatar }}" alt="Аватар пользователя" class="profile-avatar">
-        Автор: {{ author }}
 
 
         <form id="vote-form" action="/voting" method="post">
             {% csrf_token %}
             <input hidden name="voting_id" value="{{ voting_id }}">
-            {% for i in data %}
-            <div class="question">
-                <p>{{ i.questions.question }}</p>
-                <div class="options_cards">
-                {% if i.questions.type_of_voting == "one" %}
-                    {% for ans in i.answers %}
-                        <label><input type="radio" name="{{i.questions.id}}" value="{{ ans.id }}"> {{ ans.answer }}</label><br>
-                    {% endfor %}
-                {% else %}
-                    {% for ans in i.answers %}
-                        <label><input type="checkbox" name="{{i.questions.id}}" value="{{ ans.id }}"> {{ ans.answer }}</label><br>
-                    {% endfor %}
-                {% endif %}
+        <h1>Изменение описание инвентаря</h1>
+        <form action="/voting/new" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div>
+                <p><b>Измени заголовок инвентаря</b></p>
+                <input type="text" name="about_label" maxlength="100" required id="id_about_label" value="{{ about_label }}">
+            </div>
+            <div>
+                <p><b>Измени изображение</b></p>
+                <input type="file" name="image" required id="id_image" accept="image/*">
+            </div>
+            <div>
+                <p><b>Измени колличество инвентаря</b></p>
+                <input type="number" name="questions_count" required id="id_questions_count"  min="1" max="100" onchange="OnChangeQuestionsCount()" value="{{ questions_number }}">
+            </div>
+            <div id="Questions">
+                <div id="Question0">
+                    <div>
+                        <p><b>Измени состояние</b></p>
+                        <input type="radio" name="type_question0" maxlength="500" required value="one" id="one" {% if type_of_voting == "one" %}checked{% endif %}>
+                        <label for="one">Новый</label>
+                        <input type="radio" name="type_question0" maxlength="500" required value="multi" id="multi" {% if type_of_voting == "multi" %}checked{% endif %}>
+                        <label for="multi">Использованный</label>
+                        <input type="radio" name="type_question0" maxlength="500" required value="end" id="end" {% if type_of_voting == "end" %}checked{% endif %}>
+                        <label for="end">Сломанный</label>
+                    </div>
                 </div>
             </div>
-            {% endfor %}
 
-            <button type="submit" class="card_link">Vote</button>
+            <input class="card_link" type="submit" value="Подтвердить">
+        </form>
+
         </form>
         {% if request.user == author %}
-        <p><button class="card_link" onclick="confirmFunction()">УДАЛИТЬ ГОЛОСОВАНИЕ</button></p>
+        <p><button class="exit" onclick="confirmFunction()">УДАЛИТЬ ИНВЕНТАРЬ</button></p>
         {% endif %}
         {% else %}
-        <h3>Голосование не найдено!</h3>
+        <h3>Инвентарь не найдено!</h3>
         {% endif %}
       </div>
     </div>

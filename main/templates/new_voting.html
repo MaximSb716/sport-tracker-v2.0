@@ -13,7 +13,7 @@
 {% if is_auth %}
 <body>
     <div class="about_us_conteiner">
-        <h1>Описание инввентаря</h1>
+        <h1>Изменение инввентаря</h1>
         <form action="/voting/new" method="post" enctype="multipart/form-data">
             {% csrf_token %}
             <div>
@@ -31,9 +31,6 @@
             <div id="Questions">
                 <div id="Question0">
                     <div>
-                        <!--<p><b>Напиши вопрос №1</b></p>
-                        <input type="text" name="question0" maxlength="500" required placeholder="Вопрос">
-                        -->
                         <p><b>Выбери состояние</b></p>
                         <input type="radio" name="type_question0" maxlength="500" required value="one" id="one" checked>
                         <label for="one">Новый</label>
@@ -41,24 +38,8 @@
                         <label for="multi">Использованный</label>
                         <input type="radio" name="type_question0" maxlength="500" required value="end" id="end">
                         <label for="end">Сломанный</label>
-                        <!--<p><b>Выбери колличество вариантов ответа</b></p>
-                        <input type="number" name="options_count0" min="1" max="20" required id="id_options_count0" onchange="OnChangeAnswersCount(0)" value="2">
-                        -->
                     </div>
-                    <!--<div id="Answers0">
-                        <p><input type="text" name="option0_0" maxlength="70" size="70" placeholder="Вариант 1" required></p>
-                        <p><input type="text" name="option0_1" maxlength="70" size="70" placeholder="Вариант 2" required></p>
-                    </div>-->
                 </div>
-                <div id="Question1"></div>
-                <div id="Question2"></div>
-                <div id="Question3"></div>
-                <div id="Question4"></div>
-                <div id="Question5"></div>
-                <div id="Question6"></div>
-                <div id="Question7"></div>
-                <div id="Question8"></div>
-                <div id="Question9"></div>
             </div>
 
             <input type="submit" value="Submit">

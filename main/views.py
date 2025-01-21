@@ -201,19 +201,32 @@ def voting(request):
     id_of_page = request.GET.get("id", "not founded")
     
     if request.method == "POST" and request.user.is_authenticated:
-        form = VotingForm(request)
-        form.is_valid()
-        print(form.cleaned_data)
-        for answer in form.cleaned_data["answers"]:
-            print(answer, "qqq")
-            user_answer = User_answer(
-                user=request.user,
-                answer=answer)
-            user_answer.save()
-        for question in form.cleaned_data["questions"]:
-            question.user_vote_amount += 1
-            question.save()
-        return redirect(f"/result?id={form.cleaned_data['voting_id']}")
+        #СЮДА КОД !!!!!!!!!!!!
+        _voting = Votings.objects.filter(id=id_of_page)
+        context["IsExist"] = True
+        context["about_label"] = _voting[0].name
+        context["author"] = _voting[0].author
+        context["voting_id"] = _voting[0].id
+        context["type_of_voting"] = _voting[0].id
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        # СЮДА КОД !!!!!!!!!!!!
+        return redirect(f"/catalog")
 
     elif (id_of_page != "not founded"):
         _voting = Votings.objects.filter(id=id_of_page)
@@ -221,13 +234,11 @@ def voting(request):
             context["IsExist"] = True
             context["about_label"] = _voting[0].name
             context["author"] = _voting[0].author
+            context["questions_number"] = _voting[0].questions_number
             context["voting_id"] = _voting[0].id
-            _questions = Questions.objects.filter(voting=_voting[0])
+            context["type_of_voting"] = _voting[0].type_of_voting
             data = []
             i = 0
-            for quest in _questions:
-                i += 1
-                data.append({"questions" : quest, "answers" : Answers.objects.filter(question=quest)})
 
             context["data"] = data
 

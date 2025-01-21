@@ -32,14 +32,14 @@
         <div class="item">
           <div class="wrapper exmpl"><img src="{{ category.url_to_header }}" alt="Шапка опроса"></div>
           <div class="card">
-            <h3>{{category.category.name}}</h3>
-            <p>{{category.category.questions_number }}</p>
+            <h3>Наименование: {{category.category.name}}</h3>
+            <p>{{category.category.questions_number }} шт.</p>
              {% if category.category.type_of_voting == "one" %}
-                <p>Новый</p>
+                <p>Состояние: Новый</p>
               {% elif category.category.type_of_voting == "multi" %}
-                <p>Использованный</p>
+                <p>Состояние: Использованный</p>
               {% else %}
-                <p>Сломанный</p>
+                <p>Состояние: Сломанный</p>
               {% endif %}
               {% csrf_token %}
               {% if is_admin %}
