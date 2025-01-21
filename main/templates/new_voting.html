@@ -13,11 +13,11 @@
 {% if is_auth %}
 <body>
     <div class="about_us_conteiner">
-        <h1>Создай своё голосование!</h1>
+        <h1>Описание инввентаря</h1>
         <form action="/voting/new" method="post" enctype="multipart/form-data">
             {% csrf_token %}
             <div>
-                <p><b>Напиши заголовок голосования</b></p>
+                <p><b>Напиши заголовок инвентаря</b></p>
                 <input type="text" name="about_label" maxlength="100" required id="id_about_label">
             </div>
             <div>
@@ -25,7 +25,7 @@
                 <input type="file" name="image" required id="id_image" accept="image/*">
             </div>
             <div>
-                <p><b>Выбери колличество вопросов</b></p>
+                <p><b>Выбери колличество инвентаря</b></p>
                 <input type="number" name="questions_count" required id="id_questions_count" min="1" max="10" onchange="OnChangeQuestionsCount()" value="1">
             </div>
             <div id="Questions">
@@ -34,11 +34,11 @@
                         <!--<p><b>Напиши вопрос №1</b></p>
                         <input type="text" name="question0" maxlength="500" required placeholder="Вопрос">
                         -->
-                        <p><b>Выбери тип голосования</b></p>
+                        <p><b>Выбери состояние</b></p>
                         <input type="radio" name="type_question0" maxlength="500" required value="one" id="one" checked>
-                        <label for="one">Одиночный</label>
+                        <label for="one">Новый</label>
                         <input type="radio" name="type_question0" maxlength="500" required value="multi" id="multi">
-                        <label for="multi">Множественный</label>
+                        <label for="multi">Использованный</label>
                         <!--<p><b>Выбери колличество вариантов ответа</b></p>
                         <input type="number" name="options_count0" min="1" max="20" required id="id_options_count0" onchange="OnChangeAnswersCount(0)" value="2">
                         -->
