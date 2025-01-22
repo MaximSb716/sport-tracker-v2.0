@@ -1,9 +1,11 @@
 from django.contrib.auth import login, authenticate, logout
 from django.contrib import messages
 from django.contrib.messages import constants as messages
+from django.shortcuts import render, redirect, get_object_or_404
 from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_exempt
 import random, os, shutil
+from django.http import HttpResponseRedirect, HttpResponseNotFound, HttpResponse
 from main.forms import *
 from main.models import Votings, Questions, Answers, User_answer
 # Create your views here.
@@ -196,65 +198,48 @@ def new_voting(request):
 
     return render(request, "new_voting.html", context)
 
+
 def voting(request):
-    context = {"IsExist" : False}
-    id_of_page = request.GET.get("id", "not founded")
-    
-    if request.method == "POST" and request.user.is_authenticated:
-        #СЮДА КОД !!!!!!!!!!!!
-        _voting = Votings.objects.filter(id=id_of_page)
-        context["IsExist"] = True
-        context["about_label"] = _voting[0].name
-        context["author"] = _voting[0].author
-        context["voting_id"] = _voting[0].id
-        context["type_of_voting"] = _voting[0].id
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        # СЮДА КОД !!!!!!!!!!!!
-        return redirect(f"/catalog")
-
-    elif (id_of_page != "not founded"):
-        _voting = Votings.objects.filter(id=id_of_page)
-        if (len(_voting) != 0):
-            context["IsExist"] = True
-            context["about_label"] = _voting[0].name
-            context["author"] = _voting[0].author
-            context["questions_number"] = _voting[0].questions_number
-            context["voting_id"] = _voting[0].id
-            context["type_of_voting"] = _voting[0].type_of_voting
-            data = []
-            i = 0
-
-            context["data"] = data
-
-            directory = f"main/uploads/users/admin"
-            context["url_to_avatar"] = ""
-            if len(os.listdir(directory)) != 0:
-                context["url_to_avatar"] = f"/uploads/users/admin/{os.listdir(directory)[0]}"
-            directory = f"main/uploads/votings/admin/{_voting[0].id}"
-            context["url_to_header"] = ""
-            context["url_to_header"] = f"/uploads/votings/admin/{_voting[0].id}/{os.listdir(directory)[0]}"
-        else:
-            print("Not Founded")
-    else:
+    context = {"IsExist": False}
+    id_of_page = request.GET.get("id", None)
+    if id_of_page is None:
         return redirect("/catalog")
+    try:
+        _voting = get_object_or_404(Votings, id=id_of_page)
+        context["IsExist"] = True
+        context["about_label"] = _voting.name
+        context["author"] = _voting.author
+        context["questions_number"] = _voting.questions_number
+        context["voting_id"] = _voting.id
+        context["type_of_voting"] = _voting.type_of_voting
+        directory = f"main/uploads/users/admin"
+        context["url_to_avatar"] = ""
+        if os.path.exists(directory):
+            if os.listdir(directory):
+                context["url_to_avatar"] = f"/uploads/users/admin/{os.listdir(directory)[0]}"
+        directory = f"main/uploads/votings/admin/{_voting.id}"
+        context["url_to_header"] = ""
+        if os.path.exists(directory):
+            if os.listdir(directory):
+                context["url_to_header"] = f"/uploads/votings/admin/{_voting.id}/{os.listdir(directory)[0]}"
+
+        if request.method == "POST":
+            _voting.name = request.POST.get("about_label")
+            _voting.questions_number = request.POST.get("questions_count")
+            _voting.type_of_voting = request.POST.get("type_question0")
+
+
+            if request.FILES.get('image', False):  # Проверка, был ли отправлен файл
+                _voting.image = request.FILES['image']  # Обработка нового файла
+            _voting.save()
+            return redirect("/catalog")
+    except Exception as e:
+        print(e)
+        return HttpResponse("Голосование не найдено или ошибка!")
 
     return render(request, 'voting.html', context)
+
+
 
 def about_voting(request):
     context = {}
