@@ -1,14 +1,44 @@
 from django.db import models
 from django.contrib.auth.models import User
-
+import os
+from django.db import models
+from django.contrib.auth.models import User
+from uuid import uuid4
 # Create your models here.
+
+def get_image_upload_path(instance, filename):
+    """Создает путь к файлу изображения для конкретного голосования."""
+    ext = filename.split('.')[-1]  # получаем расширение файла
+    unique_name = f"header.png"
+    return os.path.join('main', 'uploads', 'votings', 'admin', str(instance.id), unique_name)
+
 
 class Votings(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
-    image = models.ImageField()
+    image = models.ImageField(upload_to=get_image_upload_path, blank=True, null=True)
     name = models.TextField()
     questions_number = models.IntegerField()
     type_of_voting = models.TextField()
+
+    def delete(self, *args, **kwargs):
+        """Удаляем файл изображения, при удалении объекта."""
+        if self.image:
+            if os.path.isfile(self.image.path):
+                os.remove(self.image.path)
+        super().delete(*args, **kwargs)
+
+    def save(self, *args, **kwargs):
+        """Переопределяем метод save чтобы сохранять картинки в нужный путь."""
+        if self.pk is None:
+            super().save(*args, **kwargs)  # если объект новый
+            return
+
+        if self.image:
+            old_voting = Votings.objects.get(pk=self.pk)
+            if old_voting.image and old_voting.image != self.image:
+                if os.path.isfile(old_voting.image.path):  # удаляем старую картинку, если она есть
+                    os.remove(old_voting.image.path)
+        super().save(*args, **kwargs)
 
 class Questions(models.Model):
     voting = models.ForeignKey(Votings, on_delete=models.CASCADE)

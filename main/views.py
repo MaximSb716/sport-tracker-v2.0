@@ -203,7 +203,7 @@ def voting(request):
     context = {"IsExist": False}
     id_of_page = request.GET.get("id", None)
     if id_of_page is None:
-        return redirect("/catalog")
+      return redirect("/catalog")
     try:
         _voting = get_object_or_404(Votings, id=id_of_page)
         context["IsExist"] = True
@@ -212,27 +212,27 @@ def voting(request):
         context["questions_number"] = _voting.questions_number
         context["voting_id"] = _voting.id
         context["type_of_voting"] = _voting.type_of_voting
-        directory = f"main/uploads/users/admin"
+        directory = os.path.join('main','uploads', 'users', 'admin')
         context["url_to_avatar"] = ""
         if os.path.exists(directory):
             if os.listdir(directory):
                 context["url_to_avatar"] = f"/uploads/users/admin/{os.listdir(directory)[0]}"
-        directory = f"main/uploads/votings/admin/{_voting.id}"
+        directory = os.path.join('main', 'uploads', 'votings', 'admin', str(_voting.id))
         context["url_to_header"] = ""
         if os.path.exists(directory):
             if os.listdir(directory):
                 context["url_to_header"] = f"/uploads/votings/admin/{_voting.id}/{os.listdir(directory)[0]}"
 
         if request.method == "POST":
-            _voting.name = request.POST.get("about_label")
-            _voting.questions_number = request.POST.get("questions_count")
-            _voting.type_of_voting = request.POST.get("type_question0")
+          _voting.name = request.POST.get("about_label")
+          _voting.questions_number = request.POST.get("questions_count")
+          _voting.type_of_voting = request.POST.get("type_question0")
 
 
-            if request.FILES.get('image', False):  # Проверка, был ли отправлен файл
-                _voting.image = request.FILES['image']  # Обработка нового файла
-            _voting.save()
-            return redirect("/catalog")
+          if request.FILES.get('image', False):
+            _voting.image = request.FILES['image']
+          _voting.save()
+          return redirect("/catalog")
     except Exception as e:
         print(e)
         return HttpResponse("Голосование не найдено или ошибка!")
