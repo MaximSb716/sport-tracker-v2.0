@@ -9,7 +9,7 @@ from django.http import HttpResponseRedirect, HttpResponseNotFound, HttpResponse
 from main.forms import *
 from main.models import Votings, Questions, Answers, User_answer
 # Create your views here.
-
+from django.conf import settings
 def index1(request):
     context = {}
     return render(request, 'index1.html', context)
@@ -199,11 +199,20 @@ def new_voting(request):
     return render(request, "new_voting.html", context)
 
 
+import os
+from django.shortcuts import render, redirect, get_object_or_404
+from django.http import HttpResponse
+from .models import Votings
+from django.conf import settings
+
+BASE_DIR = settings.BASE_DIR  # Импортируем BASE_DIR
+
+
 def voting(request):
     context = {"IsExist": False}
     id_of_page = request.GET.get("id", None)
     if id_of_page is None:
-      return redirect("/catalog")
+        return redirect("/catalog")
     try:
         _voting = get_object_or_404(Votings, id=id_of_page)
         context["IsExist"] = True
@@ -212,27 +221,59 @@ def voting(request):
         context["questions_number"] = _voting.questions_number
         context["voting_id"] = _voting.id
         context["type_of_voting"] = _voting.type_of_voting
-        directory = os.path.join('main','uploads', 'users', 'admin')
+        directory = os.path.join('main', 'uploads', 'users', 'admin')
         context["url_to_avatar"] = ""
         if os.path.exists(directory):
             if os.listdir(directory):
                 context["url_to_avatar"] = f"/uploads/users/admin/{os.listdir(directory)[0]}"
+
         directory = os.path.join('main', 'uploads', 'votings', 'admin', str(_voting.id))
         context["url_to_header"] = ""
         if os.path.exists(directory):
             if os.listdir(directory):
                 context["url_to_header"] = f"/uploads/votings/admin/{_voting.id}/{os.listdir(directory)[0]}"
 
+        # Передаем BASE_DIR в контекст, чтобы использовать его в шаблоне
+        context['BASE_DIR'] = BASE_DIR
+
         if request.method == "POST":
-          _voting.name = request.POST.get("about_label")
-          _voting.questions_number = request.POST.get("questions_count")
-          _voting.type_of_voting = request.POST.get("type_question0")
+            _voting.name = request.POST.get("about_label")
+            _voting.questions_number = request.POST.get("questions_count")
+            _voting.type_of_voting = request.POST.get("type_question0")
 
+            if request.FILES.get('image', False):
+                image_file = request.FILES['image']
 
-          if request.FILES.get('image', False):
-            _voting.image = request.FILES['image']
-          _voting.save()
-          return redirect("/catalog")
+                # Путь к папке для сохранения картинки (ВНУТРИ main)
+                upload_dir = os.path.join(BASE_DIR, 'main', 'uploads', 'votings', 'admin', str(_voting.id))
+                print(f"Upload directory: {upload_dir}")  # Для отладки пути
+
+                # Создаем папку, если ее нет
+                os.makedirs(upload_dir, exist_ok=True)
+
+                # Полный путь к новому файлу
+                new_file_path = os.path.join(upload_dir, 'header' + os.path.splitext(image_file.name)[1])
+                print(f"New file path: {new_file_path}")  # Для отладки пути
+
+                # Удаляем все файлы в папке
+                if os.path.exists(upload_dir):
+                    for file in os.listdir(upload_dir):
+                        file_path = os.path.join(upload_dir, file)
+                        if os.path.isfile(file_path):
+                            os.remove(file_path)
+
+                try:
+                    # Сохраняем новый файл
+                    with open(new_file_path, 'wb+') as destination:
+                        for chunk in image_file.chunks():
+                            destination.write(chunk)
+                # Не сохраняем путь в базе данных!
+                # _voting.image = ...  # Убрали запись пути в БД!
+                except Exception as e:
+                    print(f"Ошибка при сохранении файла: {e}")
+
+            _voting.save()
+            return redirect("/catalog")
     except Exception as e:
         print(e)
         return HttpResponse("Голосование не найдено или ошибка!")
