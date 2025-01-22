@@ -54,3 +54,36 @@ class Answers(models.Model):
 class User_answer(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     answer = models.ForeignKey(Answers, on_delete=models.CASCADE)
+
+
+class OrderItem(models.Model):
+    """
+    Модель для представления отдельных элементов заказа (например, конкретный товар).
+    """
+    name = models.CharField(max_length=255, verbose_name="Название предмета")
+    quantity = models.PositiveIntegerField(default=1, verbose_name="Количество")
+    image_url = models.URLField(blank=True, null=True,
+                                verbose_name="URL изображения")  # Добавлено поле для URL изображения
+
+    def __str__(self):
+        return f"{self.name} ({self.quantity})"
+
+    class Meta:
+        verbose_name = "Предмет заказа"
+        verbose_name_plural = "Предметы заказа"
+
+
+class UserOrder(models.Model):
+    """
+    Модель для представления заказа пользователя.
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders', verbose_name="Пользователь")
+    items = models.ManyToManyField(OrderItem, related_name='orders', verbose_name="Предметы заказа")
+    order_date = models.DateTimeField(auto_now_add=True, verbose_name="Дата заказа")
+
+    def __str__(self):
+        return f"Заказ пользователя {self.user.username} от {self.order_date.strftime('%Y-%m-%d %H:%M')}"
+
+    class Meta:
+        verbose_name = "Заказ пользователя"
+        verbose_name_plural = "Заказы пользователей"

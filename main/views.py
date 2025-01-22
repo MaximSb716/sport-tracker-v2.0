@@ -1,15 +1,15 @@
+from django.conf import settings
+BASE_DIR = settings.BASE_DIR
 from django.contrib.auth import login, authenticate, logout
-from django.contrib import messages
-from django.contrib.messages import constants as messages
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import  get_object_or_404
 from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_exempt
-import random, os, shutil
-from django.http import HttpResponseRedirect, HttpResponseNotFound, HttpResponse
+import shutil
+from django.http import *
 from main.forms import *
-from main.models import Votings, Questions, Answers, User_answer
+from main.models import *
 # Create your views here.
-from django.conf import settings
+
 def index1(request):
     context = {}
     return render(request, 'index1.html', context)
@@ -17,18 +17,53 @@ def index1(request):
 def about_us(request):
     context = {}
     return render(request, 'about_us.html', context)
+
+
 def applications(request):
-    context = {}
+    """
+    Отображает заказы текущего пользователя.
+    """
+    user = request.user
+    orders = UserOrder.objects.filter(user=user).prefetch_related('items')
+
+    formatted_orders = []
+    for order in orders:
+        # Get image_url from the first item in the order, if there are any items
+        first_item = order.items.first()
+        if first_item and first_item.image_url:
+            image_url = first_item.image_url
+        else:
+            image_url = '/static/img/logo.png'
+
+        order_data = {
+            'url_to_header': image_url,
+            'category': {
+                'name': f"Заявка от {order.order_date.strftime('%Y-%m-%d %H:%M')}",
+                'description': ', '.join([f"{item.name} ({item.quantity})" for item in
+                                          order.items.all()]) if order.items.exists() else "Нет предметов"
+            },
+            'category_id': order.id,
+        }
+        formatted_orders.append(order_data)
+
+    context = {
+        'data': formatted_orders,
+    }
     return render(request, 'applications.html', context)
+
+
 def catalog(request):
     categories = Votings.objects.all()
 
     context = {
         "categories": categories,
         "is_admin": False,
+        "is_auth": False,
     }
     if request.user.is_superuser:
         context["is_admin"] = True
+    if request.user.is_authenticated:
+        context["is_auth"] = True
     data = []
     for category in categories:
         directory = f"main/uploads/votings/admin/{category.id}"
@@ -190,22 +225,13 @@ def new_voting(request):
                 extension = os.path.splitext(str(f))[1]
                 with open(f"{directory}/header{extension}", "wb+") as sv:
                     sv.write(f.read())
-                return redirect(f"/voting?id={voting.id}")
+                return redirect(f"/catalog")
             else:
                 print("INVALID")
         else:
             context["form"] = NewVotingForm()
 
     return render(request, "new_voting.html", context)
-
-
-import os
-from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse
-from .models import Votings
-from django.conf import settings
-
-BASE_DIR = settings.BASE_DIR  # Импортируем BASE_DIR
 
 
 def voting(request):
@@ -335,3 +361,63 @@ def delete_voting(request):
         return redirect("/catalog")
     
     return render(request, 'delete_voting.html', context)
+
+def add_voting(request):
+    context = {"IsExist": False}
+    id_of_page = request.GET.get("id", None)
+    if id_of_page is None:
+        return redirect("/catalog")
+
+    _voting = get_object_or_404(Votings, id=id_of_page)
+    context["IsExist"] = True
+    context["about_label"] = _voting.name
+    context["author"] = _voting.author
+    context["questions_number"] = _voting.questions_number
+    context["voting_id"] = _voting.id
+    context["type_of_voting"] = _voting.type_of_voting
+
+    directory = os.path.join('main', 'uploads', 'users', 'admin')
+    context["url_to_avatar"] = ""
+    if os.path.exists(directory):
+        if os.listdir(directory):
+            context["url_to_avatar"] = f"/uploads/users/admin/{os.listdir(directory)[0]}"
+
+    directory = os.path.join('main', 'uploads', 'votings', 'admin', str(_voting.id))
+    context["url_to_header"] = ""
+    if os.path.exists(directory):
+        if os.listdir(directory):
+            context["url_to_header"] = f"/uploads/votings/admin/{_voting.id}/{os.listdir(directory)[0]}"
+
+    context['BASE_DIR'] = BASE_DIR
+
+
+    if request.method == 'POST':
+        voting_id = request.GET.get('id')
+        if not voting_id:
+            return HttpResponseForbidden("Invalid request: Missing voting ID")
+
+        questions_count = int(request.POST.get('questions_count', 1))  # get with a default value of 1
+            # Replace this with your logic for getting the inventory item's name by voting_id
+        inventory_name = context["about_label"]
+
+        directory = f"main/uploads/votings/admin/{_voting.id}"
+        url_to_header = ""
+        if len(os.listdir(directory)) != 0:
+            url_to_header = f"/uploads/votings/admin/{_voting.id}/{os.listdir(directory)[0]}"
+
+        item, created = OrderItem.objects.get_or_create(
+            name=inventory_name,
+            defaults={'quantity': questions_count, 'image_url': url_to_header}
+        )
+        if not created:
+            item.quantity = questions_count
+            item.image_url = url_to_header
+            item.save()
+
+            # Create the user's order
+        order = UserOrder.objects.create(user=request.user)
+        order.items.add(item)
+
+        return redirect('/applications')
+
+    return render(request, 'add_voting.html', context)

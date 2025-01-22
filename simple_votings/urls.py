@@ -32,6 +32,7 @@ urlpatterns = [
     path('voting', voting, name='voting'),
     path('voting/new', new_voting, name='voting/new'),
     path('voting/delete', delete_voting, name='voting/delete'),
+    path('add_voting', add_voting, name='add_voting'),
     path('applications', applications, name='applications'),
     path("", include("main.urls"))
 ]

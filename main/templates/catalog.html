@@ -44,8 +44,10 @@
               {% csrf_token %}
               {% if is_admin %}
                   <a class="card_link" href="{% url 'voting'%}?id={{category.category.id}}">Изменить</a>
+              {% elif is_auth %}
+                  <a class="card_link" href="{% url 'add_voting'%}?id={{category.category.id}}">Добавить в заявку</a>
               {% else %}
-                  <a class="card_link" href="{% url 'voting'%}?id={{category.category.id}}">Добавить в заявку</a>
+                  <a class="card_link">Чтобы сделать запрос, зайдите в аккаунт</a>
               {% endif %}
           </div>
         </div>
