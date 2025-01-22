@@ -21,10 +21,12 @@ def about_us(request):
 
 def applications(request):
     """
-    Отображает заказы текущего пользователя.
-    """
-    user = request.user
-    orders = UserOrder.objects.filter(user=user).prefetch_related('items')
+       Отображает заказы текущего пользователя или всех пользователей (для суперпользователя).
+       """
+    if request.user.is_superuser:
+        orders = UserOrder.objects.all().prefetch_related('items')
+    else:
+        orders = UserOrder.objects.filter(user=request.user).prefetch_related('items')
 
     formatted_orders = []
     for order in orders:
@@ -33,14 +35,15 @@ def applications(request):
         if first_item and first_item.image_url:
             image_url = first_item.image_url
         else:
-            image_url = '/static/img/logo.png'
+            image_url = '/static/images/default_header.jpg'
 
         order_data = {
             'url_to_header': image_url,
             'category': {
-                'name': f"Заявка от {order.order_date.strftime('%Y-%m-%d %H:%M')}",
+                'name': f"Заявка от {order.order_date.strftime('%Y-%m-%d %H:%M')} (Пользователь: {order.user.username})",
                 'description': ', '.join([f"{item.name} ({item.quantity})" for item in
-                                          order.items.all()]) if order.items.exists() else "Нет предметов"
+                                          order.items.all()]) if order.items.exists() else "Нет предметов",
+                'status': first_item.get_status_display() if first_item else "Нет статуса",  # передаем статус в шаблон
             },
             'category_id': order.id,
         }
@@ -49,6 +52,8 @@ def applications(request):
     context = {
         'data': formatted_orders,
     }
+
+
     return render(request, 'applications.html', context)
 
 

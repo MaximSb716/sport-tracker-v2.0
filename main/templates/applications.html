@@ -8,24 +8,9 @@
     <link rel="stylesheet" href="{% static 'header.css' %}">
     <title>Homepage</title>
     <link rel="icon" href="{% static 'img/icon.svg' %}" type="image/svg+xml">
-    <style>
-      .wrapper {
-        width: auto;
-        height: 300px;
-      }
-      .exmpl {
-        overflow: hidden;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-      }
-      .exmpl img {
-        height: auto;
-        width: 100%;
-      }
-    </style>
 </head>
 {% include 'header.html' %}
+{% if request.user.is_superuser %}
 <body>
     <div class="container">
         {% for category in data %}
@@ -34,12 +19,34 @@
           <div class="card">
             <h3>{{category.category.name}}</h3>
             <p>{{category.category.description}}</p>
-            <a>Ожидайте решения админа</a>
+            <a class="card_link">Одобрить</a>
           </div>
         </div>
         {% endfor %}
     </div>
 </body>
+
+
+
+{% else %}
+
+<body>
+    <div class="container">
+        {% for category in data %}
+        <div class="item">
+          <div class="wrapper exmpl"><img src="{{ category.url_to_header }}" alt="Шапка опроса"></div>
+          <div class="card">
+            <h3>{{category.category.name}}</h3>
+            <p>{{category.category.description}}</p>
+            <a class="card_link">{{ category.category.status }}</a>
+          </div>
+        </div>
+        {% endfor %}
+    </div>
+</body>
+
+
+{% endif %}
 <footer>
 </footer>
 

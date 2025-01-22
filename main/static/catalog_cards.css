@@ -2,6 +2,20 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@500;900&display=swap');
 
+.wrapper {
+   width: auto;
+   height: 300px;
+}
+.exmpl {
+   overflow: hidden;
+   display: flex;
+   justify-content: center;
+   align-items: center;
+}
+.exmpl img {
+   height: auto;
+   width: 100%;
+}
 
 body {
     margin: 0;

@@ -39,21 +39,21 @@
             {% csrf_token %}
 
             <div>
-                <p><b>Измени заголовок инвентаря</b></p>
+                <p><b>Измените заголовок инвентаря</b></p>
                 <input type="text" name="about_label" maxlength="100" required value="{{ about_label }}">
             </div>
             <div>
-                <p><b>Измени изображение</b></p>
+                <p><b>Измените изображение</b></p>
                 <input type="file" name="image"  accept="image/*">
             </div>
             <div>
-                <p><b>Измени колличество инвентаря</b></p>
+                <p><b>Измените колличество инвентаря</b></p>
                 <input type="number" name="questions_count"  min="1" max="100" onchange="OnChangeQuestionsCount()" value="{{ questions_number }}">
             </div>
             <div id="Questions">
                 <div id="Question0">
                     <div>
-                        <p><b>Измени состояние</b></p>
+                        <p><b>Измените состояние</b></p>
                         <input type="radio" name="type_question0" maxlength="500" required value="one" id="one" {% if type_of_voting == "one" %}checked{% endif %}>
                         <label for="one">Новый</label>
                         <input type="radio" name="type_question0" maxlength="500" required value="multi" id="multi" {% if type_of_voting == "multi" %}checked{% endif %}>

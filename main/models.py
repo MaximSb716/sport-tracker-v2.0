@@ -60,13 +60,19 @@ class OrderItem(models.Model):
     """
     Модель для представления отдельных элементов заказа (например, конкретный товар).
     """
+    STATUS_CHOICES = [
+        ('pending', 'В ожидании'),
+        ('approved', 'Одобрено'),
+    ]
     name = models.CharField(max_length=255, verbose_name="Название предмета")
     quantity = models.PositiveIntegerField(default=1, verbose_name="Количество")
     image_url = models.URLField(blank=True, null=True,
                                 verbose_name="URL изображения")  # Добавлено поле для URL изображения
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='В ожидании', verbose_name="Статус")  # Статус
 
     def __str__(self):
-        return f"{self.name} ({self.quantity})"
+        return f"{self.name} ({self.quantity}) - {self.get_status_display()}"
+
 
     class Meta:
         verbose_name = "Предмет заказа"

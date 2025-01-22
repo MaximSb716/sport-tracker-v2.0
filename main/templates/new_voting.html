@@ -13,25 +13,25 @@
 {% if is_auth %}
 <body>
     <div class="about_us_conteiner">
-        <h1>Изменение инввентаря</h1>
+        <h1>Создание инвентаря</h1>
         <form action="/voting/new" method="post" enctype="multipart/form-data">
             {% csrf_token %}
             <div>
-                <p><b>Напиши заголовок инвентаря</b></p>
+                <p><b>Напишите заголовок инвентаря</b></p>
                 <input type="text" name="about_label" maxlength="100" required id="id_about_label">
             </div>
             <div>
-                <p><b>Добавь изображение</b></p>
+                <p><b>Добавьте изображение</b></p>
                 <input type="file" name="image" required id="id_image" accept="image/*">
             </div>
             <div>
-                <p><b>Выбери колличество инвентаря</b></p>
+                <p><b>Выберите колличество инвентаря</b></p>
                 <input type="number" name="questions_count" required id="id_questions_count" min="1" max="100" onchange="OnChangeQuestionsCount()" value="1">
             </div>
             <div id="Questions">
                 <div id="Question0">
                     <div>
-                        <p><b>Выбери состояние</b></p>
+                        <p><b>Выберите состояние</b></p>
                         <input type="radio" name="type_question0" maxlength="500" required value="one" id="one" checked>
                         <label for="one">Новый</label>
                         <input type="radio" name="type_question0" maxlength="500" required value="multi" id="multi">
