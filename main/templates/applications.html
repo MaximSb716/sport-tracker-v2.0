@@ -11,31 +11,31 @@
 </head>
 {% include 'header.html' %}
 {% if request.user.is_superuser %}
+
+
 <body>
     <div class="container">
-        {% for item in data %}
-        {% if item.status == 'pending' %}
+        {% for category in data %}
         <div class="item">
-          <div class="wrapper exmpl"><img src="" alt="Изображение предмета"></div>
+          <div class="wrapper exmpl"><img src="{{ category.url_to_header }}" alt="Изображение предмета"></div>
           <div class="card">
-            <h3>{{item.name}}</h3>
-            <p>Количество: {{item.quantity}}</p>
+            <h3>{{category.category.name}}</h3>
+            <p>{{ category.category.description }}</p>
             <div>
                 <form method="post" action="{% url 'approve_item' %}">
                     {% csrf_token %}
-                    <input type="hidden" name="item_id" value="{{ item.id }}">
-                    <button type="submit" class="card_link">Одобрить</button>
-                </form>
-                 <!--Форма для отказа (если нужно) -->
+                    <input type="hidden" name="item_id" value="{{ category.id }}">
+                    <button type="submit" class="card_link approve_button">Одобрить</button>
+                </form><br>
+                <!--Форма для отказа (если нужно) -->
                  <form method="post" action="{% url 'reject_item' %}">
                      {% csrf_token %}
-                     <input type="hidden" name="item_id" value="{{ item.id }}">
-                     <button type="submit" class="card_link" style="background-color: #b30000;">Отказать</button>
+                     <input type="hidden" name="item_id" value="{{ category.id }}">
+                     <button type="submit" class="card_link reject_button" >Отказать</button>
                  </form>
             </div>
           </div>
         </div>
-        {% endif %}
         {% endfor %}
     </div>
 </body>
@@ -52,7 +52,7 @@
           <div class="card">
             <h3>{{category.category.name}}</h3>
             <p>{{category.category.description}}</p>
-            <a class="card_link">{{ category.category.status }}</a>
+              <a class="card_link_wait">{{ category.category.status }}</a>
           </div>
         </div>
         {% endfor %}

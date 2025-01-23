@@ -3,7 +3,11 @@ BASE_DIR = settings.BASE_DIR
 from django.contrib.auth import login, authenticate, logout
 from django.shortcuts import  get_object_or_404
 from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
+from django.views.decorators.http import require_POST
+from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib import messages
 import shutil
 from django.http import *
 from main.forms import *
@@ -19,40 +23,59 @@ def about_us(request):
     return render(request, 'about_us.html', context)
 
 
+from django.shortcuts import render
+from .models import UserOrder, OrderItem
+from django.db.models import Prefetch
+
+
 def applications(request):
     """
        Отображает заказы текущего пользователя или всех пользователей (для суперпользователя).
        """
-    if request.user.is_superuser:
-        orders = UserOrder.objects.all().prefetch_related('items')
-    else:
-        orders = UserOrder.objects.filter(user=request.user).prefetch_related('items')
-
     formatted_orders = []
-    for order in orders:
-        # Get image_url from the first item in the order, if there are any items
-        first_item = order.items.first()
-        if first_item and first_item.image_url:
-            image_url = first_item.image_url
-        else:
-            image_url = '/static/images/default_header.jpg'
 
-        order_data = {
-            'url_to_header': image_url,
-            'category': {
-                'name': f"Заявка от {order.order_date.strftime('%Y-%m-%d %H:%M')} (Пользователь: {order.user.username})",
-                'description': ', '.join([f"{item.name} ({item.quantity})" for item in
-                                          order.items.all()]) if order.items.exists() else "Нет предметов",
-                'status': first_item.get_status_display() if first_item else "Нет статуса",  # передаем статус в шаблон
-            },
-            'category_id': order.id,
-        }
-        formatted_orders.append(order_data)
+    if request.user.is_superuser:
+        order_items = OrderItem.objects.exclude(status='approved')
+        for item in order_items:
+            order_data = {
+                'url_to_header': item.image_url if item.image_url else '/static/images/default_header.jpg',
+                'category': {
+                    'name': item.name,
+                    'description': f"Количество: {item.quantity}",
+                     'status': item.get_status_display(),
+                },
+                'id': item.id,
+            }
+            formatted_orders.append(order_data)
+    else:
+        user_orders = UserOrder.objects.filter(user=request.user).prefetch_related(
+            Prefetch('items', queryset=OrderItem.objects.all())
+        )
+        for order in user_orders:
+            # Get image_url from the first item in the order, if there are any items
+            first_item = order.items.first()
+            if first_item and first_item.image_url:
+                image_url = first_item.image_url
+            else:
+                image_url = '/static/images/default_header.jpg'
+
+            order_data = {
+                'url_to_header': image_url,
+                'category': {
+                    'name': f"Заявка от {order.order_date.strftime('%Y-%m-%d %H:%M')} (Пользователь: {order.user.username})",
+                    'description': ', '.join([f"{item.name} ({item.quantity})" for item in
+                                              order.items.all()]) if order.items.exists() else "Нет предметов",
+                    'status': first_item.get_status_display() if first_item else "Нет статуса",
+                },
+                 'id': order.id,
+            }
+            formatted_orders.append(order_data)
+
+
 
     context = {
         'data': formatted_orders,
     }
-
 
     return render(request, 'applications.html', context)
 
@@ -412,11 +435,12 @@ def add_voting(request):
 
         item, created = OrderItem.objects.get_or_create(
             name=inventory_name,
-            defaults={'quantity': questions_count, 'image_url': url_to_header}
+            defaults={'quantity': questions_count, 'image_url': url_to_header, 'status': 'pending'}
         )
         if not created:
             item.quantity = questions_count
             item.image_url = url_to_header
+            item.status = 'pending'
             item.save()
 
             # Create the user's order
@@ -428,27 +452,25 @@ def add_voting(request):
     return render(request, 'add_voting.html', context)
 
 
+@require_POST
+@login_required  # Требует авторизации пользователя
 def approve_item(request):
-#     """Изменяет статус OrderItem на 'Одобрено'."""
-#     if request.method == 'POST':
-#         item_id = request.POST.get('item_id')
-#         if not item_id:
-#            return HttpResponseBadRequest("Missing item_id in POST data")
-#
-#         try:
-#             item = get_object_or_404(OrderItem, pk=item_id)
-#             item.status = 'approved'
-#             item.save()
-#         except ValueError:
-#             return HttpResponseBadRequest("Invalid item_id format")
-#         except Exception as e:
-#             print(f"Error updating item status: {e}")
-#             return HttpResponseBadRequest("Error updating item status")
-#
-    return redirect("/applications")
+    item_id = request.POST.get('item_id')
+    if item_id:
+        item = get_object_or_404(OrderItem, id=item_id)
+        try:
+            item.status = 'approved'
+            item.save()
+            messages.success(request, f"Статус '{item.name}' успешно изменен на 'Одобрено'")
+        except Exception as e:
+            print(f"Error saving item status: {e}")
+            messages.error(request, f"Ошибка при изменении статуса '{item.name}'. Попробуйте позже")
+    else:
+        messages.error(request, f"Не удалось получить id элемента.")
+    return redirect(request.META.get('HTTP_REFERER', '/applications'))
 
 
-# def reject_item(request):
+def reject_item(request):
 #     """Изменяет статус OrderItem на 'Отказано'."""
 #     if request.method == 'POST':
 #         item_id = request.POST.get('item_id')
@@ -465,4 +487,4 @@ def approve_item(request):
 #             print(f"Error updating item status: {e}")
 #             return HttpResponseBadRequest("Error updating item status")
 #
-#     return redirect("/applications")
+    return redirect("/applications")

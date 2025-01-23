@@ -68,7 +68,7 @@ class OrderItem(models.Model):
     quantity = models.PositiveIntegerField(default=1, verbose_name="Количество")
     image_url = models.URLField(blank=True, null=True,
                                 verbose_name="URL изображения")  # Добавлено поле для URL изображения
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='В ожидании', verbose_name="Статус")  # Статус
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending', verbose_name="Статус")  # Статус
 
     def __str__(self):
         return f"{self.name} ({self.quantity}) - {self.get_status_display()}"

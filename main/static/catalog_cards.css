@@ -104,6 +104,13 @@ body {
     align-self: flex-start;
     transition: background-color 0.3s ease;
 }
+.card_link_wait {
+    text-decoration: none;
+    background-color: #ffffff;
+    color: black;
+    border-radius: 4px;
+    align-self: flex-start;
+}
 
 .card_link:hover {
     background-color: #0056b3;
