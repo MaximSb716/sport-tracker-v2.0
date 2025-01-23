@@ -9,6 +9,10 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
 import shutil
+from django.db import transaction
+from .models import OrderItem, UserOrder, Votings
+import os
+import logging
 from django.http import *
 from main.forms import *
 from main.models import *
@@ -35,7 +39,7 @@ def applications(request):
     formatted_orders = []
 
     if request.user.is_superuser:
-        order_items = OrderItem.objects.exclude(status='approved')
+        order_items = OrderItem.objects.exclude(status='approved').exclude(status='rejected')
         for item in order_items:
             order_data = {
                 'url_to_header': item.image_url if item.image_url else '/static/images/default_header.jpg',
@@ -370,14 +374,7 @@ def delete_voting(request):
             context["about_label"] = _voting[0].name
             context["author"] = _voting[0].author
             context["voting_id"] = _voting[0].id
-            _questions = Questions.objects.filter(voting=_voting[0])
-            data = []
-            i = 0
-            for quest in _questions:
-                i += 1
-                data.append({"questions" : quest, "answers" : Answers.objects.filter(question=quest)})
-            
-            context["data"] = data
+
             directory = f"main/uploads/users/admin"
             context["url_to_avatar"] = f"/uploads/users/admin/{os.listdir(directory)[0]}"
             directory = f"main/uploads/votings/admin/{_voting[0].id}"
@@ -453,7 +450,77 @@ def add_voting(request):
 
 
 @require_POST
-@login_required  # Требует авторизации пользователя
+@login_required
+def submit_inventory(request):
+    if request.method == 'POST':
+        voting_id = request.POST.get('voting_id')
+        if not voting_id:
+            messages.error(request, "Invalid request: Missing voting ID")
+            return redirect('/applications')
+
+        try:
+            with transaction.atomic():
+                voting_id = int(voting_id)
+                voting = Votings.objects.get(pk=voting_id)
+                questions_count = int(request.POST.get('questions_count', 1))
+                inventory_name = request.POST.get('inventory_name')
+
+                if not inventory_name:
+                    messages.error(request, "Invalid request: Missing inventory name")
+                    return redirect('/applications')
+
+                # Получаем url_to_header из voting
+                directory = f"main/uploads/votings/admin/{voting.id}"
+                url_to_header = ""
+                if os.path.exists(directory) and len(os.listdir(directory)) > 0:
+                    url_to_header = f"/uploads/votings/admin/{voting.id}/{os.listdir(directory)[0]}"
+
+                # Проверка на превышение максимального количества
+                if questions_count > voting.questions_number:
+                    messages.error(request, f"Запрошенное количество ({questions_count}) превышает доступное ({voting.questions_number}).")
+                    return redirect('/applications')
+                # Получаем или создаем UserOrder для этого голосования
+                order, created = UserOrder.objects.get_or_create(user=request.user, voting=voting)
+
+                # Ищем существующий OrderItem в этом UserOrder
+                existing_item = order.items.filter(name=inventory_name, voting=voting).first()
+
+                if existing_item:
+                    # Проверяем, не превысит ли добавление количества доступное
+                    available_quantity = voting.questions_number - sum(item.quantity for item in order.items.all() if item.voting == voting)
+                    if questions_count > available_quantity:
+                        messages.error(request, f"Нельзя запросить больше, чем {available_quantity}, так как уже запрошено {existing_item.quantity}.")
+                        return redirect('/applications')
+
+                    existing_item.quantity += questions_count
+                    existing_item.save()  # Сохраняем изменения
+                else:
+                    # Создаем новый OrderItem, если его нет
+                    item = OrderItem.objects.create(
+                        name=inventory_name,
+                        voting=voting,
+                        quantity=questions_count,
+                        image_url=url_to_header,  # <- Добавлено сохранение image_url
+                        status='pending'
+                    )
+                    order.items.add(item)
+
+                return redirect('/applications')
+
+        except Votings.DoesNotExist:
+            messages.error(request, "Invalid request: Voting not found")
+            return redirect('/applications')
+        except ValueError:
+            messages.error(request, "Invalid request: Invalid questions_count")
+            return redirect('/applications')
+        except Exception as e:
+            messages.error(request, f"Unexpected error: {e}")
+
+    return HttpResponseForbidden("Invalid request: Not a POST request")
+
+
+@require_POST
+@login_required
 def approve_item(request):
     item_id = request.POST.get('item_id')
     if item_id:
@@ -461,30 +528,35 @@ def approve_item(request):
         try:
             item.status = 'approved'
             item.save()
-            messages.success(request, f"Статус '{item.name}' успешно изменен на 'Одобрено'")
+            if item.voting:
+                item.voting.questions_number = max(0, item.voting.questions_number - item.quantity)
+                item.voting.save()
+                messages.success(request, f"Статус '{item.name}' успешно изменен на 'Одобрено'. Количество вопросов в голосовании обновлено.")
+            else:
+                messages.warning(request, f"Статус '{item.name}' успешно изменен на 'Одобрено', но нет связи с голосованием.")
         except Exception as e:
             print(f"Error saving item status: {e}")
-            messages.error(request, f"Ошибка при изменении статуса '{item.name}'. Попробуйте позже")
+            messages.error(request, f"Ошибка при изменении статуса '{item.name}'. Попробуйте позже.")
     else:
         messages.error(request, f"Не удалось получить id элемента.")
-    return redirect(request.META.get('HTTP_REFERER', '/applications'))
+    return redirect('/applications')
 
 
 def reject_item(request):
-#     """Изменяет статус OrderItem на 'Отказано'."""
-#     if request.method == 'POST':
-#         item_id = request.POST.get('item_id')
-#         if not item_id:
-#             return HttpResponseBadRequest("Missing item_id in POST data")
-#
-#         try:
-#             item = get_object_or_404(OrderItem, pk=item_id)
-#             item.status = 'rejected'  # Предполагается, что у вас есть такой статус
-#             item.save()
-#         except ValueError:
-#             return HttpResponseBadRequest("Invalid item_id format")
-#         except Exception as e:
-#             print(f"Error updating item status: {e}")
-#             return HttpResponseBadRequest("Error updating item status")
-#
-    return redirect("/applications")
+     """Изменяет статус OrderItem на 'Отказано'."""
+     if request.method == 'POST':
+         item_id = request.POST.get('item_id')
+         if not item_id:
+             return HttpResponseBadRequest("Missing item_id in POST data")
+
+         try:
+             item = get_object_or_404(OrderItem, pk=item_id)
+             item.status = 'rejected'  # Предполагается, что у вас есть такой статус
+             item.save()
+         except ValueError:
+             return HttpResponseBadRequest("Invalid item_id format")
+         except Exception as e:
+             print(f"Error updating item status: {e}")
+             return HttpResponseBadRequest("Error updating item status")
+
+     return redirect("/applications")

@@ -4,6 +4,8 @@ import os
 from django.db import models
 from django.contrib.auth.models import User
 from uuid import uuid4
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 # Create your models here.
 
 def get_image_upload_path(instance, filename):
@@ -40,21 +42,6 @@ class Votings(models.Model):
                     os.remove(old_voting.image.path)
         super().save(*args, **kwargs)
 
-class Questions(models.Model):
-    voting = models.ForeignKey(Votings, on_delete=models.CASCADE)
-    image = models.ImageField()
-    question = models.TextField()
-    type_of_voting = models.TextField()
-    user_vote_amount = models.IntegerField()
-
-class Answers(models.Model):
-    question = models.ForeignKey(Questions, on_delete=models.CASCADE)
-    answer = models.TextField()
-
-class User_answer(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    answer = models.ForeignKey(Answers, on_delete=models.CASCADE)
-
 
 class OrderItem(models.Model):
     """
@@ -63,16 +50,16 @@ class OrderItem(models.Model):
     STATUS_CHOICES = [
         ('pending', 'В ожидании'),
         ('approved', 'Одобрено'),
+        ('rejected', 'Отказано'),
     ]
     name = models.CharField(max_length=255, verbose_name="Название предмета")
     quantity = models.PositiveIntegerField(default=1, verbose_name="Количество")
-    image_url = models.URLField(blank=True, null=True,
-                                verbose_name="URL изображения")  # Добавлено поле для URL изображения
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending', verbose_name="Статус")  # Статус
+    image_url = models.URLField(blank=True, null=True, verbose_name="URL изображения")
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending', verbose_name="Статус")
+    voting = models.ForeignKey(Votings, on_delete=models.SET_NULL, null=True, blank=True, related_name='order_items')
 
     def __str__(self):
         return f"{self.name} ({self.quantity}) - {self.get_status_display()}"
-
 
     class Meta:
         verbose_name = "Предмет заказа"
@@ -86,6 +73,7 @@ class UserOrder(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders', verbose_name="Пользователь")
     items = models.ManyToManyField(OrderItem, related_name='orders', verbose_name="Предметы заказа")
     order_date = models.DateTimeField(auto_now_add=True, verbose_name="Дата заказа")
+    voting = models.ForeignKey(Votings, on_delete=models.SET_NULL, null=True, blank=True, related_name='user_orders')
 
     def __str__(self):
         return f"Заказ пользователя {self.user.username} от {self.order_date.strftime('%Y-%m-%d %H:%M')}"
@@ -93,3 +81,16 @@ class UserOrder(models.Model):
     class Meta:
         verbose_name = "Заказ пользователя"
         verbose_name_plural = "Заказы пользователей"
+
+@receiver(post_save, sender=OrderItem)
+def update_questions_number(sender, instance, **kwargs):
+    if kwargs.get('created', False):  # Только для новых объектов
+        return
+
+    if instance.status == 'approved':
+        if instance.voting:
+            try:
+                instance.voting.questions_number = max(0, instance.voting.questions_number - instance.quantity)
+                instance.voting.save()
+            except Exception as e:
+                print(f"Ошибка обновления questions_number: {e}")

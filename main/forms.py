@@ -3,7 +3,7 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
 from django.core.validators import validate_integer, validate_slug
 from django.core.exceptions import ValidationError
-from main.models import Votings, Questions, Answers
+from main.models import *
 
 
 class SignUpForm(UserCreationForm):

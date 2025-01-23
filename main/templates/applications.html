@@ -43,7 +43,6 @@
 
 
 {% else %}
-
 <body>
     <div class="container">
         {% for category in data %}
@@ -53,6 +52,13 @@
             <h3>{{category.category.name}}</h3>
             <p>{{category.category.description}}</p>
               <a class="card_link_wait">{{ category.category.status }}</a>
+              {% if messages %}
+                <ul class="messages">
+                {% for message in messages %}
+                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>Сообщение: {{ message }}</li> <br>
+                {% endfor %}
+                </ul>
+              {% endif %}
           </div>
         </div>
         {% endfor %}

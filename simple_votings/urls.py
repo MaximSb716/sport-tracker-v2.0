@@ -36,6 +36,8 @@ urlpatterns = [
     path('applications', applications, name='applications'),
     path('approve_item', approve_item, name='approve_item'),
     path('reject_item', reject_item, name='reject_item'),
+    path('add_voting/<int:voting_id>/', add_voting, name='add_voting'),
+    path('submit_inventory/', submit_inventory, name='submit_inventory'),
     path("", include("main.urls"))
 ]
 
