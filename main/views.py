@@ -426,3 +426,43 @@ def add_voting(request):
         return redirect('/applications')
 
     return render(request, 'add_voting.html', context)
+
+
+def approve_item(request):
+#     """Изменяет статус OrderItem на 'Одобрено'."""
+#     if request.method == 'POST':
+#         item_id = request.POST.get('item_id')
+#         if not item_id:
+#            return HttpResponseBadRequest("Missing item_id in POST data")
+#
+#         try:
+#             item = get_object_or_404(OrderItem, pk=item_id)
+#             item.status = 'approved'
+#             item.save()
+#         except ValueError:
+#             return HttpResponseBadRequest("Invalid item_id format")
+#         except Exception as e:
+#             print(f"Error updating item status: {e}")
+#             return HttpResponseBadRequest("Error updating item status")
+#
+    return redirect("/applications")
+
+
+# def reject_item(request):
+#     """Изменяет статус OrderItem на 'Отказано'."""
+#     if request.method == 'POST':
+#         item_id = request.POST.get('item_id')
+#         if not item_id:
+#             return HttpResponseBadRequest("Missing item_id in POST data")
+#
+#         try:
+#             item = get_object_or_404(OrderItem, pk=item_id)
+#             item.status = 'rejected'  # Предполагается, что у вас есть такой статус
+#             item.save()
+#         except ValueError:
+#             return HttpResponseBadRequest("Invalid item_id format")
+#         except Exception as e:
+#             print(f"Error updating item status: {e}")
+#             return HttpResponseBadRequest("Error updating item status")
+#
+#     return redirect("/applications")

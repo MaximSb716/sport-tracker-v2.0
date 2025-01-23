@@ -13,15 +13,29 @@
 {% if request.user.is_superuser %}
 <body>
     <div class="container">
-        {% for category in data %}
+        {% for item in data %}
+        {% if item.status == 'pending' %}
         <div class="item">
-          <div class="wrapper exmpl"><img src="{{ category.url_to_header }}" alt="Шапка опроса"></div>
+          <div class="wrapper exmpl"><img src="" alt="Изображение предмета"></div>
           <div class="card">
-            <h3>{{category.category.name}}</h3>
-            <p>{{category.category.description}}</p>
-            <a class="card_link">Одобрить</a>
+            <h3>{{item.name}}</h3>
+            <p>Количество: {{item.quantity}}</p>
+            <div>
+                <form method="post" action="{% url 'approve_item' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="item_id" value="{{ item.id }}">
+                    <button type="submit" class="card_link">Одобрить</button>
+                </form>
+                 <!--Форма для отказа (если нужно) -->
+                 <form method="post" action="{% url 'reject_item' %}">
+                     {% csrf_token %}
+                     <input type="hidden" name="item_id" value="{{ item.id }}">
+                     <button type="submit" class="card_link" style="background-color: #b30000;">Отказать</button>
+                 </form>
+            </div>
           </div>
         </div>
+        {% endif %}
         {% endfor %}
     </div>
 </body>
