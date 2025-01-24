@@ -4,6 +4,13 @@ from django.contrib.auth import login, authenticate, logout
 from django.shortcuts import  get_object_or_404
 from django.shortcuts import render, redirect
 from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.contrib.auth.models import User
+import os
+from .models import Votings, OrderItem, UserOrder
+from django.db import transaction
 from django.contrib.auth.decorators import login_required
 from .models import UserOrder, OrderItem
 from django.contrib.auth import get_user_model
@@ -14,6 +21,9 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
 import shutil
+from django.shortcuts import render
+from .models import UserOrder, OrderItem
+from django.db.models import Prefetch
 from django.db import transaction
 from .models import OrderItem, UserOrder, Votings
 import os
@@ -30,11 +40,6 @@ def index1(request):
 def about_us(request):
     context = {}
     return render(request, 'about_us.html', context)
-
-
-from django.shortcuts import render
-from .models import UserOrder, OrderItem
-from django.db.models import Prefetch
 
 
 def applications(request):
@@ -480,10 +485,12 @@ def submit_inventory(request):
                 if os.path.exists(directory) and len(os.listdir(directory)) > 0:
                     url_to_header = f"/uploads/votings/admin/{voting.id}/{os.listdir(directory)[0]}"
 
-                # Проверка на превышение максимального количества
+                # Проверка на превышение максимального количества (добавлено при создании или добавлении)
                 if questions_count > voting.questions_number:
-                    messages.error(request, f"Запрошенное количество ({questions_count}) превышает доступное ({voting.questions_number}).")
+                    messages.error(request,
+                                   f"Запрошенное количество ({questions_count}) превышает доступное ({voting.questions_number}).")
                     return redirect('/applications')
+
                 # Получаем или создаем UserOrder для этого голосования
                 order, created = UserOrder.objects.get_or_create(user=request.user, voting=voting)
 
@@ -491,13 +498,24 @@ def submit_inventory(request):
                 existing_item = order.items.filter(name=inventory_name, voting=voting).first()
 
                 if existing_item:
-                    # Проверяем, не превысит ли добавление количества доступное
-                    available_quantity = voting.questions_number - sum(item.quantity for item in order.items.all() if item.voting == voting)
+                    # Проверка при изменении (увеличении или уменьшении)
+                    total_requested_items = sum(item.quantity for item in order.items.all() if item.voting == voting)
+
+                    # Calculate available questions before update
+                    available_quantity = voting.questions_number - (total_requested_items - existing_item.quantity)
+
                     if questions_count > available_quantity:
-                        messages.error(request, f"Нельзя запросить больше, чем {available_quantity}, так как уже запрошено {existing_item.quantity}.")
+                        messages.error(request,
+                                       f"Нельзя запросить больше чем {available_quantity}, так как уже запрошено {existing_item.quantity}.")
                         return redirect('/applications')
 
                     existing_item.quantity += questions_count
+
+                    # Добавленная проверка для вычитания
+                    if existing_item.quantity < 0:
+                        messages.error(request, "Нельзя уменьшить количество ниже 0.")
+                        return redirect('/applications')
+
                     existing_item.save()  # Сохраняем изменения
                 else:
                     # Создаем новый OrderItem, если его нет
@@ -505,7 +523,7 @@ def submit_inventory(request):
                         name=inventory_name,
                         voting=voting,
                         quantity=questions_count,
-                        image_url=url_to_header,  # <- Добавлено сохранение image_url
+                        image_url=url_to_header,
                         status='pending'
                     )
                     order.items.add(item)
@@ -615,26 +633,63 @@ def issue_inventory(request, user_id, voting_id):
     if os.path.exists(directory) and os.listdir(directory):
         url_to_header = f"/uploads/votings/admin/{voting.id}/{os.listdir(directory)[0]}"
 
-    error_message = None  # Добавим переменную для сообщения об ошибке
-
     if request.method == 'POST':
-        # Здесь будет логика обработки формы, например, выбор количества и типа инвентаря
         item_name = request.POST.get('item_name')
-        quantity = int(request.POST.get('quantity', 1))  # Обработаем возможную ошибку
+        quantity_str = request.POST.get('quantity')
 
-        if item_name and quantity > 0:
+        if not item_name:
+            messages.error(request, "Необходимо указать название инвентаря.")
+            return render(request, 'issue_inventory.html',
+                          {'user': user, 'voting': voting, 'url_to_header': url_to_header})
+
+        if not quantity_str:
+            messages.error(request, "Необходимо указать количество.")
+            return render(request, 'issue_inventory.html',
+                          {'user': user, 'voting': voting, 'url_to_header': url_to_header})
+        try:
+            quantity = int(quantity_str)
+        except ValueError:
+            messages.error(request, "Указано некорректное количество.")
+            return render(request, 'issue_inventory.html',
+                          {'user': user, 'voting': voting, 'url_to_header': url_to_header})
+
+        if quantity <= 0:
+             messages.error(request, "Количество должно быть больше 0.")
+             return render(request, 'issue_inventory.html',
+                          {'user': user, 'voting': voting, 'url_to_header': url_to_header})
+
+        with transaction.atomic():
             if voting.questions_number >= quantity:
-              try:
-                  order_item = OrderItem.objects.create(name=item_name, quantity=quantity, voting=voting)
-                  UserOrder.objects.create(user=user, voting=voting, items=[order_item], status='get_from_admin')
-                  voting.questions_number -= quantity #Уменьшаем количество
-                  voting.save()
-                  return redirect('/')
-              except Exception as e:
-                  print(f"Ошибка при создании заказа: {e}")
-                  error_message = "Ошибка при создании заказа, обратитесь к администратору."
-            else:
-              error_message = "Запрошенное количество превышает доступный запас!"
+                try:
+                    user_order, created = UserOrder.objects.get_or_create(
+                         user=user,
+                         voting=voting,
+                         defaults={'status': 'approved'}
+                    )
 
-    context = {'user': user, 'voting': voting, 'url_to_header': url_to_header, 'error_message': error_message}  # Передаем URL в контекст
+                    if not created:
+                        messages.error(request, f"У пользователя {user.username} уже есть заказ для голосования {voting.name}")
+                        return redirect('/catalog')
+
+                    order_item = OrderItem.objects.create(
+                        name=item_name,
+                        quantity=quantity,
+                        voting=voting,
+                        status='approved'
+                    )
+                    user_order.items.add(order_item)
+
+                    voting.questions_number -= quantity
+                    voting.save()
+
+                    messages.success(request, f"Заказ для пользователя {user.username} успешно создан")
+                    return redirect('/catalog')
+
+                except Exception as e:
+                    messages.error(request, f"Ошибка при создании заказа: {e}")
+            else:
+                messages.error(request, "Запрошенное количество превышает доступный запас!")
+
+
+    context = {'user': user, 'voting': voting, 'url_to_header': url_to_header}
     return render(request, 'issue_inventory.html', context)

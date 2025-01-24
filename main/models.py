@@ -1,11 +1,9 @@
-from django.db import models
-from django.contrib.auth.models import User
+
 import os
 from django.db import models
 from django.contrib.auth.models import User
 from uuid import uuid4
 from django.db.models.signals import post_save
-from django.dispatch import receiver
 # Create your models here.
 
 def get_image_upload_path(instance, filename):
@@ -83,15 +81,3 @@ class UserOrder(models.Model):
         verbose_name = "Заказ пользователя"
         verbose_name_plural = "Заказы пользователей"
 
-@receiver(post_save, sender=OrderItem)
-def update_questions_number(sender, instance, **kwargs):
-    if kwargs.get('created', False):  # Только для новых объектов
-        return
-
-    if instance.status == 'approved':
-        if instance.voting:
-            try:
-                instance.voting.questions_number = max(0, instance.voting.questions_number - instance.quantity)
-                instance.voting.save()
-            except Exception as e:
-                print(f"Ошибка обновления questions_number: {e}")
