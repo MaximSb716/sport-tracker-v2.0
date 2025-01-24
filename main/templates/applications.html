@@ -31,8 +31,15 @@
                  <form method="post" action="{% url 'reject_item' %}">
                      {% csrf_token %}
                      <input type="hidden" name="item_id" value="{{ category.id }}">
-                     <button type="submit" class="card_link reject_button" >Отказать</button>
+                     <button type="submit" class="card_link reject_button" style="background-color: #b30000;">Отказать</button>
                  </form>
+                {% if messages %}
+                    <ul class="messages">
+                        {% for message in messages %}
+                        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
             </div>
           </div>
         </div>
@@ -45,22 +52,24 @@
 {% else %}
 <body>
     <div class="container">
-        {% for category in data %}
-        <div class="item">
-          <div class="wrapper exmpl"><img src="{{ category.url_to_header }}" alt="Шапка опроса"></div>
-          <div class="card">
-            <h3>{{category.category.name}}</h3>
-            <p>{{category.category.description}}</p>
-              <a class="card_link_wait">{{ category.category.status }}</a>
-              {% if messages %}
-                <ul class="messages">
-                {% for message in messages %}
-                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>Сообщение: {{ message }}</li> <br>
-                {% endfor %}
-                </ul>
-              {% endif %}
-          </div>
-        </div>
+        {% for item in data %}
+            <div class="item">
+                <div class="wrapper exmpl">
+                    <img src="{{item.url_to_header}}" alt="Шапка опроса">
+                </div>
+                <div class="card">
+                    <h3>{{ item.category.name }}</h3>
+                    <p>{{ item.category.description }}</p>
+                    <a class="card_link_wait">{{ item.category.status }}</a>
+                    {% if messages %}
+                        <ul class="messages">
+                            {% for message in messages %}
+                                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>Сообщение: {{ message }}</li><br>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+            </div>
         {% endfor %}
     </div>
 </body>

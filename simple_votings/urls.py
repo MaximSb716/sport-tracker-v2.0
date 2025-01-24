@@ -38,9 +38,9 @@ urlpatterns = [
     path('reject_item', reject_item, name='reject_item'),
     path('add_voting/<int:voting_id>/', add_voting, name='add_voting'),
     path('submit_inventory/', submit_inventory, name='submit_inventory'),
-    path('secure_inventory/', secure_inventory, name='secure_inventory'),  # Путь к списку пользователей
-    path('secure_inventory/<int:user_id>/', user_detail, name='user_detail'),
-    path('users/<int:user_id>/issue/<int:voting_id>/', issue_inventory, name='issue_inventory'),
+    path('secure_inventory/', secure_inventory, name='secure_inventory'),
+    path('user_detail/<int:user_id>/', user_detail, name='user_detail'),
+    path('issue_inventory/<int:user_id>/<int:voting_id>/<str:item_name>/', issue_inventory, name='issue_inventory'),
     path("", include("main.urls"))
 ]
 

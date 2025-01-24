@@ -43,7 +43,6 @@
                 <form method="post">
                     {% csrf_token %}
                     <input type="hidden" name="voting_id" value="{{ voting.id }}">
-                     <input type="hidden" name="item_name" value="default_item_name">
                     <div>
                         <p><b>Пользователь:</b> {{user.username}}</p>
                         <p><b>Голосование:</b> {{ voting.name }}</p>

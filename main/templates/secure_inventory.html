@@ -15,7 +15,7 @@
         <h2 style="margin-left: 5px;">Users</h2>
         {% if users %}
             {% for user in users %}
-                <div class="item">
+                <div class="item" style="margin-top: 10px;">
                     <h3 class="card">{{ user.username }}</h3>
                         <a style="padding:10px; margin-top: -10px;" href="{% url 'user_detail' user_id=user.id %}">
                            <button class="card_link">Выдать инвентарь</button>

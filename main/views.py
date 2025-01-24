@@ -1,33 +1,16 @@
 from django.conf import settings
 BASE_DIR = settings.BASE_DIR
 from django.contrib.auth import login, authenticate, logout
-from django.shortcuts import  get_object_or_404
-from django.shortcuts import render, redirect
-from django.shortcuts import render, get_object_or_404, redirect
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-from django.contrib.auth.models import User
-import os
-from .models import Votings, OrderItem, UserOrder
-from django.db import transaction
-from django.contrib.auth.decorators import login_required
-from .models import UserOrder, OrderItem
 from django.contrib.auth import get_user_model
-from django.http import HttpResponse
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import redirect, get_object_or_404
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
 import shutil
 from django.shortcuts import render
-from .models import UserOrder, OrderItem
 from django.db.models import Prefetch
 from django.db import transaction
-from .models import OrderItem, UserOrder, Votings
-import os
-import logging
 from django.http import *
 from main.forms import *
 from main.models import *
@@ -49,7 +32,7 @@ def applications(request):
     formatted_orders = []
 
     if request.user.is_superuser:
-        order_items = OrderItem.objects.exclude(status='approved').exclude(status='rejected')
+        order_items = OrderItem.objects.exclude(status='approved').exclude(status='rejected').exclude(status='get_from_admin')
         for item in order_items:
             order_data = {
                 'url_to_header': item.image_url if item.image_url else '/static/images/default_header.jpg',
@@ -62,28 +45,23 @@ def applications(request):
             }
             formatted_orders.append(order_data)
     else:
-        user_orders = UserOrder.objects.filter(user=request.user).prefetch_related(
-            Prefetch('items', queryset=OrderItem.objects.all())
+        user_items = OrderItem.objects.filter(
+            voting__user_orders__user=request.user
         )
-        for order in user_orders:
-            # Get image_url from the first item in the order, if there are any items
-            first_item = order.items.first()
-            if first_item and first_item.image_url:
-                image_url = first_item.image_url
-            else:
-                image_url = '/static/images/default_header.jpg'
-
-            order_data = {
-                'url_to_header': image_url,
+        for item in user_items:
+            formatted_orders.append({
+                'url_to_header': item.image_url,
                 'category': {
-                    'name': f"Заявка от {order.order_date.strftime('%Y-%m-%d %H:%M')} (Пользователь: {order.user.username})",
-                    'description': ', '.join([f"{item.name} ({item.quantity})" for item in
-                                              order.items.all()]) if order.items.exists() else "Нет предметов",
-                    'status': first_item.get_status_display() if first_item else "Нет статуса",
+                    'name': item.name,
+                    'description': f"Количество: {item.quantity}",
+                    'status': item.get_status_display(),
                 },
-                 'id': order.id,
-            }
-            formatted_orders.append(order_data)
+                'id': item.id,
+            })
+
+    context = {
+        'data': formatted_orders,
+    }
 
 
 
@@ -92,7 +70,6 @@ def applications(request):
     }
 
     return render(request, 'applications.html', context)
-
 
 def catalog(request):
     categories = Votings.objects.all()
@@ -549,20 +526,26 @@ def approve_item(request):
     if item_id:
         item = get_object_or_404(OrderItem, id=item_id)
         try:
-            item.status = 'approved'
-            item.save()
             if item.voting:
-                item.voting.questions_number = max(0, item.voting.questions_number - item.quantity)
-                item.voting.save()
-                messages.success(request, f"Статус '{item.name}' успешно изменен на 'Одобрено'. Количество вопросов в голосовании обновлено.")
+                if item.voting.questions_number >= item.quantity:
+                    item.status = 'approved'
+                    item.voting.questions_number -= item.quantity
+                    item.voting.save()
+                    item.save()
+
+                    messages.success(request, f"Статус '{item.name}' успешно изменен на 'Одобрено'. Количество инвентаря уменьшено.")
+                else:
+                    messages.error(request, f"Недостаточно инвентаря для выполнения действия.")
             else:
-                messages.warning(request, f"Статус '{item.name}' успешно изменен на 'Одобрено', но нет связи с голосованием.")
+                item.status = 'approved'
+                item.save()
+
         except Exception as e:
-            print(f"Error saving item status: {e}")
-            messages.error(request, f"Ошибка при изменении статуса '{item.name}'. Попробуйте позже.")
+            pass
     else:
-        messages.error(request, f"Не удалось получить id элемента.")
+        pass
     return redirect('/applications')
+
 
 
 def reject_item(request):
@@ -623,7 +606,7 @@ def user_detail(request, user_id):
 
 
 @login_required
-def issue_inventory(request, user_id, voting_id):
+def issue_inventory(request, user_id, voting_id, item_name):
     """Выдает инвентарь выбранному пользователю."""
     user = get_object_or_404(User, id=user_id)
     voting = get_object_or_404(Votings, id=voting_id)
@@ -631,17 +614,11 @@ def issue_inventory(request, user_id, voting_id):
     directory = f"main/uploads/votings/admin/{voting.id}"
     url_to_header = ""
     if os.path.exists(directory) and os.listdir(directory):
-        url_to_header = f"/uploads/votings/admin/{voting.id}/{os.listdir(directory)[0]}"
+         url_to_header = f"/uploads/votings/admin/{voting.id}/{os.listdir(directory)[0]}"
+
 
     if request.method == 'POST':
-        item_name = request.POST.get('item_name')
         quantity_str = request.POST.get('quantity')
-
-        if not item_name:
-            messages.error(request, "Необходимо указать название инвентаря.")
-            return render(request, 'issue_inventory.html',
-                          {'user': user, 'voting': voting, 'url_to_header': url_to_header})
-
         if not quantity_str:
             messages.error(request, "Необходимо указать количество.")
             return render(request, 'issue_inventory.html',
@@ -654,42 +631,54 @@ def issue_inventory(request, user_id, voting_id):
                           {'user': user, 'voting': voting, 'url_to_header': url_to_header})
 
         if quantity <= 0:
-             messages.error(request, "Количество должно быть больше 0.")
-             return render(request, 'issue_inventory.html',
+            messages.error(request, "Количество должно быть больше 0.")
+            return render(request, 'issue_inventory.html',
                           {'user': user, 'voting': voting, 'url_to_header': url_to_header})
 
         with transaction.atomic():
             if voting.questions_number >= quantity:
                 try:
-                    user_order, created = UserOrder.objects.get_or_create(
-                         user=user,
-                         voting=voting,
-                         defaults={'status': 'approved'}
-                    )
+                    # Получаем или создаем UserOrder для этого пользователя и голосования
+                    user_order, created = UserOrder.objects.get_or_create(user=user, voting=voting)
 
-                    if not created:
-                        messages.error(request, f"У пользователя {user.username} уже есть заказ для голосования {voting.name}")
-                        return redirect('/catalog')
+                    # Ищем существующий OrderItem в этом UserOrder
+                    existing_item = user_order.items.filter(name=item_name, voting=voting).first()
 
-                    order_item = OrderItem.objects.create(
-                        name=item_name,
-                        quantity=quantity,
-                        voting=voting,
-                        status='approved'
-                    )
-                    user_order.items.add(order_item)
+                    if existing_item:
+                         # Если OrderItem существует, увеличиваем его количество
+                        if voting.questions_number >= quantity + existing_item.quantity:
+                             existing_item.quantity += quantity
+                             existing_item.save()
+                             voting.questions_number -= quantity
+                             voting.save()
+                             messages.success(request, f"Количество инвентаря '{item_name}' увеличено для пользователя {user.username}.")
 
-                    voting.questions_number -= quantity
-                    voting.save()
+                        else:
+                             messages.error(request, "Запрошенное количество превышает доступный запас!")
+                             return render(request, 'issue_inventory.html',
+                                           {'user': user, 'voting': voting, 'url_to_header': url_to_header})
 
-                    messages.success(request, f"Заказ для пользователя {user.username} успешно создан")
-                    return redirect('/catalog')
+                    else:
+                        # Если OrderItem не существует, создаем новый
+                        order_item = OrderItem.objects.create(
+                            name=item_name,
+                            quantity=quantity,
+                            voting=voting,
+                            status='get_from_admin',
+                            image_url=url_to_header,
+                        )
+                        user_order.items.add(order_item)
+                        voting.questions_number -= quantity
+                        voting.save()
+                        messages.success(request, f"Заказ '{item_name}' для пользователя {user.username} успешно создан.")
+
+                    return redirect('/applications')
 
                 except Exception as e:
                     messages.error(request, f"Ошибка при создании заказа: {e}")
             else:
                 messages.error(request, "Запрошенное количество превышает доступный запас!")
-
-
+                return render(request, 'issue_inventory.html',
+                              {'user': user, 'voting': voting, 'url_to_header': url_to_header})
     context = {'user': user, 'voting': voting, 'url_to_header': url_to_header}
     return render(request, 'issue_inventory.html', context)
