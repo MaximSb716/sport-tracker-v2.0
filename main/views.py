@@ -3,6 +3,11 @@ BASE_DIR = settings.BASE_DIR
 from django.contrib.auth import login, authenticate, logout
 from django.shortcuts import  get_object_or_404
 from django.shortcuts import render, redirect
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from .models import UserOrder, OrderItem
+from django.contrib.auth import get_user_model
+from django.http import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
@@ -560,3 +565,76 @@ def reject_item(request):
              return HttpResponseBadRequest("Error updating item status")
 
      return redirect("/applications")
+
+
+User = get_user_model()
+
+def secure_inventory(request):
+    """Отображает список всех пользователей, кроме суперпользователей, с кнопками."""
+    users = User.objects.filter(is_superuser=False)
+    context = {'users': users}
+    return render(request, 'secure_inventory.html', context)
+
+
+def user_detail(request, user_id):
+    """Обработка кнопки "Выдать инвентарь" для пользователя."""
+    user = get_object_or_404(User, id=user_id)
+    categories = Votings.objects.all()
+
+    context = {
+        "categories": categories,
+        "is_admin": False,
+        "is_auth": False,
+    }
+    if request.user.is_superuser:
+        context["is_admin"] = True
+    if request.user.is_authenticated:
+        context["is_auth"] = True
+    data = []
+    for category in categories:
+        directory = f"main/uploads/votings/admin/{category.id}"
+        url_to_header = ""
+        if len(os.listdir(directory)) != 0:
+            url_to_header = f"/uploads/votings/admin/{category.id}/{os.listdir(directory)[0]}"
+        data.append({"category": category, "url_to_header": url_to_header})
+
+    context["data"] = data
+    context['user'] = user
+
+    return render(request, 'user_detail.html', context)
+
+
+@login_required
+def issue_inventory(request, user_id, voting_id):
+    """Выдает инвентарь выбранному пользователю."""
+    user = get_object_or_404(User, id=user_id)
+    voting = get_object_or_404(Votings, id=voting_id)
+
+    directory = f"main/uploads/votings/admin/{voting.id}"
+    url_to_header = ""
+    if os.path.exists(directory) and os.listdir(directory):
+        url_to_header = f"/uploads/votings/admin/{voting.id}/{os.listdir(directory)[0]}"
+
+    error_message = None  # Добавим переменную для сообщения об ошибке
+
+    if request.method == 'POST':
+        # Здесь будет логика обработки формы, например, выбор количества и типа инвентаря
+        item_name = request.POST.get('item_name')
+        quantity = int(request.POST.get('quantity', 1))  # Обработаем возможную ошибку
+
+        if item_name and quantity > 0:
+            if voting.questions_number >= quantity:
+              try:
+                  order_item = OrderItem.objects.create(name=item_name, quantity=quantity, voting=voting)
+                  UserOrder.objects.create(user=user, voting=voting, items=[order_item], status='get_from_admin')
+                  voting.questions_number -= quantity #Уменьшаем количество
+                  voting.save()
+                  return redirect('/')
+              except Exception as e:
+                  print(f"Ошибка при создании заказа: {e}")
+                  error_message = "Ошибка при создании заказа, обратитесь к администратору."
+            else:
+              error_message = "Запрошенное количество превышает доступный запас!"
+
+    context = {'user': user, 'voting': voting, 'url_to_header': url_to_header, 'error_message': error_message}  # Передаем URL в контекст
+    return render(request, 'issue_inventory.html', context)

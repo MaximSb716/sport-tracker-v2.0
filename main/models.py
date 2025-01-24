@@ -51,11 +51,12 @@ class OrderItem(models.Model):
         ('pending', 'В ожидании'),
         ('approved', 'Одобрено'),
         ('rejected', 'Отказано'),
+        ('get_from_admin', 'Выдано админом')
     ]
     name = models.CharField(max_length=255, verbose_name="Название предмета")
     quantity = models.PositiveIntegerField(default=1, verbose_name="Количество")
     image_url = models.URLField(blank=True, null=True, verbose_name="URL изображения")
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending', verbose_name="Статус")
+    status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='pending', verbose_name="Статус")
     voting = models.ForeignKey(Votings, on_delete=models.SET_NULL, null=True, blank=True, related_name='order_items')
 
     def __str__(self):

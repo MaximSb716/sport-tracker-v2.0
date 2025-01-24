@@ -1,0 +1,61 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'survey.css' %}">
+    <link rel="stylesheet" href="{% static 'profile.css' %}">
+    <link rel="stylesheet" href="{% static 'about_us.css' %}">
+    <link rel="stylesheet" href="{% static 'header.css' %}">
+    <title>Homepage</title>
+    <link rel="icon" href="{% static 'img/icon.svg' %}" type="image/svg+xml">
+    <style>
+      .wrapper {
+        width: auto;
+        height: 300px;
+      }
+      .exmpl {
+        overflow: hidden;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .exmpl img {
+        height: auto;
+        width: 100%;
+      }
+    </style>
+</head>
+{% include 'header.html' %}
+<body>
+    <div class="container">
+        <div class="item">
+            <div class="wrapper exmpl">
+              {% if url_to_header %}
+                <img src="{{ url_to_header }}" alt="Шапка опроса">
+              {% else %}
+               <p>Нет изображения</p>
+              {% endif %}
+            </div>
+            <div class="card">
+                <h1>Выдача инвентаря</h1>
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="voting_id" value="{{ voting.id }}">
+                    <div>
+                        <p><b>Пользователь:</b> {{user.username}}</p>
+                        <p><b>Голосование:</b> {{ voting.name }}</p>
+                    </div>
+                     <div>
+                        <label for="quantity"><b>Выбери количество инвентаря:</b></label><br>
+                        <input type="number" id="quantity" name="quantity" min="1" max="{{ voting.questions_number }}" value="1" required>
+                    </div><br>
+                    <button class="card_link" type="submit">Выдать</button>
+                </form>
+                <a class="styled-link" href="{% url 'secure_inventory' %}">Вернуться к списку пользователей</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

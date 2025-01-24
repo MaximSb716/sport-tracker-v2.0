@@ -1,0 +1,33 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'catalog_cards.css' %}">
+    <link rel="stylesheet" href="{% static 'header.css' %}">
+    <title>Homepage</title>
+    <link rel="icon" href="{% static 'img/icon.svg' %}" type="image/svg+xml">
+</head>
+{% include 'header.html' %}
+<body>
+    <div style="margin-left: 5px; margin-right: 5px;">
+        <h2 style="margin-left: 5px;">Users</h2>
+        {% if users %}
+            {% for user in users %}
+                <div class="item">
+                    <h3 class="card">{{ user.username }}</h3>
+                        <a style="padding:10px; margin-top: -10px;" href="{% url 'user_detail' user_id=user.id %}">
+                           <button class="card_link">Выдать инвентарь</button>
+                        </a>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>No users found.</p>
+        {% endif %}
+    </div>
+</body>
+<footer>
+</footer>
+
+</html>
