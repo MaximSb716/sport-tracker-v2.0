@@ -32,26 +32,33 @@
     <div class="container">
         <div class="item">
             <div class="wrapper exmpl">
-                <img src="{{ url_to_header }}" alt="Шапка опроса">
+                <img src="" alt="Шапка опроса">
             </div>
             <div class="card">
                 {% if IsExist %}
                     <h1>Добавление инвентаря</h1>
-                    <form method="post" action="{% url 'submit_inventory' %}">
+                    <form method="post" action="{% url 'add_voting' %}?id={{voting_id}}">
                         {% csrf_token %}
                         <input type="hidden" name="voting_id" value="{{ voting_id }}">
                         <input type="hidden" name="inventory_name" value="{{ about_label }}">
-                        <div>
+                         <div>
                             <p><b>{{ about_label }}</b></p>
-                        </div>
+                         </div>
                         <div>
                             <p><b>Выбери количество инвентаря:</b></p>
                             <input type="number" name="questions_count" min="1" max="{{ questions_number }}" value="1">
-                        </div><br>
+                         </div><br>
                         <input class="card_link" type="submit" value="Подтвердить">
                     </form>
                 {% else %}
                     <h3>Инвентарь не найден!</h3>
+                {% endif %}
+                 {% if messages %}
+                    <ul class="messages">
+                        {% for message in messages %}
+                        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                        {% endfor %}
+                    </ul>
                 {% endif %}
             </div>
         </div>

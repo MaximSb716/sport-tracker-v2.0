@@ -37,7 +37,6 @@ urlpatterns = [
     path('approve_item', approve_item, name='approve_item'),
     path('reject_item', reject_item, name='reject_item'),
     path('add_voting/<int:voting_id>/', add_voting, name='add_voting'),
-    path('submit_inventory/', submit_inventory, name='submit_inventory'),
     path('secure_inventory/', secure_inventory, name='secure_inventory'),
     path('user_detail/<int:user_id>/', user_detail, name='user_detail'),
     path('issue_inventory/<int:user_id>/<int:voting_id>/<str:item_name>/', issue_inventory, name='issue_inventory'),
