@@ -38,8 +38,12 @@
             <strong>Login:</strong>
             <span class="profile-email">{{ request.user }}</span>
           </li>
-
-
+        </ul>
+        <h2>Информация о инвентаре</h2>
+        <ul>
+          <div class="button-container">
+             <a href="{% url 'view_inventory' %}" class="inventory-button">Просмотр всего инвентаря</a>
+          </div>
         </ul>
 
       </div>

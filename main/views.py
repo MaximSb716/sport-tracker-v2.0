@@ -4,8 +4,9 @@ from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth import get_user_model
 from django.shortcuts import redirect, get_object_or_404
 from django.views.decorators.http import require_POST
+from django.db.models import Sum, F
+from collections import defaultdict
 from django.contrib.auth.decorators import login_required
-from django.db.models import Max
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Sum, Max
 from django.contrib import messages
@@ -737,3 +738,32 @@ def plan(request):
     #    'is_auth': request.user.is_authenticated,  # Проверяем, авторизован ли пользователь
     #}
     return render(request, 'plan.html', context)
+
+def view_inventory(request):
+    """Отображает информацию о текущем инвентаре, суммируя по пользователю, названию и статусу."""
+
+    # 1. Получаем все OrderItem со статусами 'get_from_admin' или 'approved'
+    order_items = OrderItem.objects.filter(status__in=['get_from_admin', 'approved']).select_related('voting').order_by('name')
+
+    # 2. Группируем элементы по пользователю, названию и статусу
+    grouped_items = defaultdict(lambda: {'total_quantity': 0, 'user': set(), 'status': None})
+
+    for item in order_items:
+      orders = UserOrder.objects.filter(items=item).select_related('user')
+      for order in orders:
+        key = (order.user.username, item.name, item.status)
+        grouped_items[key]['total_quantity'] += item.quantity
+        grouped_items[key]['user'].add(order.user.username)
+        grouped_items[key]['status'] = item.status
+    # 3. Преобразуем сгруппированные данные в список для шаблона
+    inventory = []
+    for (user, name, status), data in grouped_items.items():
+        inventory.append({
+            'user': ', '.join(data['user']),
+            'name': name,
+            'total_quantity': data['total_quantity'],
+            'status_display': dict(OrderItem.STATUS_CHOICES).get(data['status'])
+            })
+
+    context = {'inventory': inventory}
+    return render(request, 'view_inventory.html', context)

@@ -4,7 +4,6 @@
 
 html {
     font-family: Roboto;
-    min-width: 470px;
 }
 .main_img{
     width: 500px;
@@ -17,13 +16,12 @@ html {
     width: 160vh;
 }
 body {
-    background-color: #ffffff;
-    font-family: Roboto;
-    height: auto;
-    width: max
-    font-size: 23px;
-    font-weight: 350;
     margin: 0;
+    font-family: 'Roboto', sans-serif;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #f8f9fa;
 }
 .about_us_conteiner{
     margin-top: 400px;
