@@ -14,15 +14,19 @@
 <body>
   <div class="profile-container">
     <div class="profile-header">
-        <img src="{{ url_to_avatar }}" alt="Аватар пользователя" class="profile-avatar">
-        <form method="post" enctype="multipart/form-data">
+        <img src="" alt="Аватар пользователя" class="profile-avatar">
+        <form method="post" enctype="multipart/form-data" id="avatar-form">
             {% csrf_token %}
             <div class="profile-avatar-actions">
               {{ form.as_p  }}
-                <button for="avatar-upload" class="profile-change-avatar">Сменить аватар</button>
-            </div>
+                <label for="avatar-upload" class="profile-change-avatar">Сменить аватар</label>
+                <input type="file" id="avatar-upload" name="image" style="display: none;" accept="image/*">
+               <input type="hidden" name="url_to_avatar" value="{{ url_to_avatar }}">
+
+                 <button type="submit" style="display: none" id="submit-avatar">Отправить</button>
+             </div>
             {% if is_admin %}
-            <a class="profile-create" href="{% url 'voting/new' %}">Создать голосование</a>
+            <a class="profile-create" style="margin-left: 80px;" href="{% url 'voting/new' %}">Создать голосование</a>
             {% endif %}
         </form>
       </div>
@@ -34,14 +38,25 @@
             <strong>Login:</strong>
             <span class="profile-email">{{ request.user }}</span>
           </li>
-          <li>
-             <strong>Пароль:</strong>
-            <span class="profile-password">********</span>
-          </li>
-          <a class="exit" href="{% url 'sign_out' %}">Выйти</a>
+
+
         </ul>
 
       </div>
+        {% if is_admin %}
+        {% else %}
+      {% if user_inventory %}
+        <h2>Ваш инвентарь</h2>
+        <ul class="minimal-inventory">
+            {% for item in user_inventory %}
+                <li>{{ item.name }} - {{ item.quantity }} шт. {{ item.status }}</li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p>У вас пока нет одобренных заявок.</p>
+        {% endif %}
+        {% endif %}
+        <a class="exit" href="{% url 'sign_out' %}">Выйти</a>
     </div>
   </div>
    <script>

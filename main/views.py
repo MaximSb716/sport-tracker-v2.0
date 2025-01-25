@@ -7,6 +7,7 @@ from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
 from django.db.models import Max
 from django.views.decorators.csrf import csrf_exempt
+from django.db.models import Sum, Max
 from django.contrib import messages
 import shutil
 from django.shortcuts import render
@@ -48,10 +49,10 @@ def applications(request):
     else:
         user_items = OrderItem.objects.filter(
             voting__user_orders__user=request.user
-        )
+        ).exclude(status='approved').exclude(status='rejected').exclude(status='get_from_admin')
         for item in user_items:
             formatted_orders.append({
-                'url_to_header': item.image_url,
+                'url_to_header': item.image_url if item.image_url else '/static/images/default_header.jpg',
                 'category': {
                     'name': item.name,
                     'description': f"Количество: {item.quantity}",
@@ -64,11 +65,6 @@ def applications(request):
         'data': formatted_orders,
     }
 
-
-
-    context = {
-        'data': formatted_orders,
-    }
 
     return render(request, 'applications.html', context)
 
@@ -104,44 +100,47 @@ def profile(request):
     context = {
         "is_auth": False,
         "is_admin": False,
+        "user_inventory": [],
     }
+
     if request.user.is_superuser:
         context["is_admin"] = True
-    if request.user.is_authenticated and (not request.user.is_superuser):
+    if request.user.is_authenticated:
         context["is_auth"] = True
-        directory = f"main/uploads/users/{request.user.id}"
+        directory = f"main/uploads/users/{request.user.id}" if not request.user.is_superuser else  f"main/uploads/users/admin"
         context["url_to_avatar"] = ""
-        if len(os.listdir(directory)) != 0:
-            context["url_to_avatar"] = f"/uploads/users/{request.user.id}/{os.listdir(directory)[0]}"
+        if os.path.exists(directory) and len(os.listdir(directory)) != 0:
+            context["url_to_avatar"] = f"/uploads/users/{request.user.id}/{os.listdir(directory)[0]}" if not request.user.is_superuser else  f"/uploads/users/admin/{os.listdir(directory)[0]}"
+
         context["form"] = UploadImageForm()
+
         if request.method == "POST":
             form = UploadImageForm(request.POST, request.FILES)
             if form.is_valid():
-                shutil.rmtree(directory)
-                os.mkdir(directory)
+                if os.path.exists(directory):
+                    shutil.rmtree(directory)
+                os.makedirs(directory, exist_ok=True)
                 f = request.FILES["image"]
                 extension = os.path.splitext(str(f))[1]
-                with open(f"main/uploads/users/{request.user.id}/avatar{extension}", "wb+") as sv:
+                with open(os.path.join(directory, f"avatar{extension}"), "wb+") as sv:
                     sv.write(f.read())
                 return redirect("/profile")
 
-    if request.user.is_authenticated and  request.user.is_superuser:
-        context["is_auth"] = True
-        directory = f"main/uploads/users/admin"
-        context["url_to_avatar"] = ""
-        if len(os.listdir(directory)) != 0:
-            context["url_to_avatar"] = f"/uploads/users/admin/{os.listdir(directory)[0]}"
-        context["form"] = UploadImageForm()
-        if request.method == "POST":
-            form = UploadImageForm(request.POST, request.FILES)
-            if form.is_valid():
-                shutil.rmtree(directory)
-                os.mkdir(directory)
-                f = request.FILES["image"]
-                extension = os.path.splitext(str(f))[1]
-                with open(f"main/uploads/users/admin/avatar{extension}", "wb+") as sv:
-                    sv.write(f.read())
-                return redirect("/profile")
+        if not request.user.is_superuser:
+            user_inventory = OrderItem.objects.filter(
+                voting__user_orders__user=request.user,
+                status__in=['approved', 'get_from_admin']
+            ).values('name','status', 'image_url').annotate(total_quantity=Sum('quantity'))
+
+            inventory_list = []
+            for item in user_inventory:
+                 inventory_list.append({
+                  'name': item['name'],
+                  'quantity': item['total_quantity'],
+                 'image_url': item['image_url'] if item['image_url'] else '/static/images/default_header.jpg',
+                   })
+            context["user_inventory"] = inventory_list
+
     return render(request, 'profile.html', context)
 
 @csrf_exempt
@@ -431,22 +430,44 @@ def add_voting(request):
 
         try:
             with transaction.atomic():
-                # Создаем новый UserOrder
-                new_order = UserOrder.objects.create(user=request.user, voting=_voting)
+                # Проверяем, существует ли уже такой UserOrder
+                existing_order = UserOrder.objects.filter(
+                    user=request.user,
+                    voting=_voting
+                ).first()
 
-                # Создаем новый OrderItem
-                new_item = OrderItem.objects.create(
+                if not existing_order:
+                    # Если UserOrder не существует, создаем новый
+                    new_order = UserOrder.objects.create(user=request.user, voting=_voting)
+                else:
+                    new_order = existing_order  # используем существующий
+
+                # Проверяем, существует ли уже такой OrderItem с тем же статусом
+                existing_item = OrderItem.objects.filter(
                     name=inventory_name,
-                    quantity=questions_count,
-                    image_url=url_to_header,
-                    status='pending',
                     voting=_voting,
-                )
-                new_order.items.add(new_item)
+                    status='pending',  # Проверяем только на pending
+                    orders__user=request.user
+                ).first()
+
+                if existing_item:
+                    # Если OrderItem существует и статус pending - увеличиваем количество
+                    existing_item.quantity += questions_count
+                    existing_item.save()
+                    new_order.items.add(existing_item)
+                else:
+                    # Если OrderItem не существует или статус не pending - создаем новый
+                    new_item = OrderItem.objects.create(
+                        name=inventory_name,
+                        quantity=questions_count,
+                        image_url=url_to_header,
+                        status='pending',
+                        voting=_voting,
+                    )
+                    new_order.items.add(new_item)
 
                 _voting.questions_number -= questions_count
                 _voting.save()
-
                 messages.success(request, "Заказ успешно создан.")
                 return redirect('/applications')
 
@@ -635,8 +656,7 @@ def issue_inventory(request, user_id, voting_id, item_name):
     directory = f"main/uploads/votings/admin/{voting.id}"
     url_to_header = ""
     if os.path.exists(directory) and os.listdir(directory):
-         url_to_header = f"/uploads/votings/admin/{voting.id}/{os.listdir(directory)[0]}"
-
+        url_to_header = f"/uploads/votings/admin/{voting.id}/{os.listdir(directory)[0]}"
 
     if request.method == 'POST':
         quantity_str = request.POST.get('quantity')
@@ -657,31 +677,47 @@ def issue_inventory(request, user_id, voting_id, item_name):
                           {'user': user, 'voting': voting, 'url_to_header': url_to_header})
 
         with transaction.atomic():
-
             try:
-                  # Create a new user's order and link it to the current voting
-                 user_order = UserOrder.objects.create(user=user, voting=voting)
+                # Проверяем, есть ли у пользователя заказ для этого голосования
+                user_order = UserOrder.objects.filter(user=user, voting=voting).first()
 
-                 # Create a new OrderItem with status 'get_from_admin'
-                 new_item = OrderItem.objects.create(
+                if not user_order:
+                    # Если нет, создаем новый
+                     user_order = UserOrder.objects.create(user=user, voting=voting)
+
+                 # Проверяем, существует ли уже такой же OrderItem с соответствующим статусом
+                existing_item = OrderItem.objects.filter(
+                    name=item_name,
+                    voting=voting,
+                     status='get_from_admin',
+                    orders__user=user
+                ).first()
+
+                if existing_item:
+                 # Если OrderItem существует, увеличиваем количество
+                    existing_item.quantity += quantity
+                    existing_item.save()
+                else:
+                # Если такого OrderItem нет, создаем новый с get_from_admin
+                   new_item = OrderItem.objects.create(
                        name=item_name,
                        quantity=quantity,
                        image_url=url_to_header,
                        status='get_from_admin',
                        voting=voting,
-                     )
-                 user_order.items.add(new_item)
+                   )
+                   user_order.items.add(new_item)
 
-                 voting.questions_number -= quantity
-                 voting.save()
 
-                 messages.success(request, f"Заказ '{item_name}' для пользователя {user.username} успешно создан.")
-                 return redirect('/applications')
+
+                voting.questions_number -= quantity
+                voting.save()
+
+                messages.success(request, f"Заказ '{item_name}' для пользователя {user.username} успешно создан.")
+                return redirect('/applications')
 
             except Exception as e:
                 messages.error(request, f"Ошибка при создании заказа: {e}")
-
-
 
     context = {'user': user, 'voting': voting, 'url_to_header': url_to_header}
     return render(request, 'issue_inventory.html', context)
