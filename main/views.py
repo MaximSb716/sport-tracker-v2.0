@@ -280,54 +280,50 @@ def voting(request):
             if os.listdir(directory):
                 context["url_to_header"] = f"/uploads/votings/admin/{_voting.id}/{os.listdir(directory)[0]}"
 
-        # Получение BASE_DIR через settings
-        context['BASE_DIR'] = settings.BASE_DIR
+        # Передаем BASE_DIR в контекст, чтобы использовать его в шаблоне
+        context['BASE_DIR'] = BASE_DIR
 
         if request.method == "POST":
-            try:
-                # Убираем изменение имени _voting.name = request.POST.get("about_label")
-                new_questions_number = int(request.POST.get("questions_count"))  # Преобразование и проверка на число
-                new_type_of_voting = request.POST.get("type_question0")
+            _voting.name = request.POST.get("about_label")
+            _voting.questions_number = request.POST.get("questions_count")
+            _voting.type_of_voting = request.POST.get("type_question0")
 
-                if new_questions_number <= 0:
-                    messages.error(request, "Количество вопросов должно быть больше 0.")
-                    return render(request, 'voting.html', context)
+            if request.FILES.get('image', False):
+                image_file = request.FILES['image']
 
+                # Путь к папке для сохранения картинки (ВНУТРИ main)
+                upload_dir = os.path.join(BASE_DIR, 'main', 'uploads', 'votings', 'admin', str(_voting.id))
+                print(f"Upload directory: {upload_dir}")  # Для отладки пути
 
+                # Создаем папку, если ее нет
+                os.makedirs(upload_dir, exist_ok=True)
 
-                _voting.questions_number = new_questions_number
-                _voting.type_of_voting = new_type_of_voting
+                # Полный путь к новому файлу
+                new_file_path = os.path.join(upload_dir, 'header' + os.path.splitext(image_file.name)[1])
+                print(f"New file path: {new_file_path}")  # Для отладки пути
 
+                # Удаляем все файлы в папке
+                if os.path.exists(upload_dir):
+                    for file in os.listdir(upload_dir):
+                        file_path = os.path.join(upload_dir, file)
+                        if os.path.isfile(file_path):
+                            os.remove(file_path)
 
-                if request.FILES.get('image', False):
-                    image_file = request.FILES['image']
-                    upload_dir = os.path.join(settings.BASE_DIR, 'main', 'uploads', 'votings', 'admin', str(_voting.id))
-                    os.makedirs(upload_dir, exist_ok=True)
-                    # Удаляем старый файл, если он есть
-                    old_file_path = os.path.join(upload_dir, 'header' + os.path.splitext(_voting.name)[1])
-                    if os.path.exists(old_file_path):
-                        os.remove(old_file_path)
-                    new_file_path = os.path.join(upload_dir, 'header' + os.path.splitext(image_file.name)[1])
-
+                try:
+                    # Сохраняем новый файл
                     with open(new_file_path, 'wb+') as destination:
                         for chunk in image_file.chunks():
                             destination.write(chunk)
+                # Не сохраняем путь в базе данных!
+                # _voting.image = ...  # Убрали запись пути в БД!
+                except Exception as e:
+                    print(f"Ошибка при сохранении файла: {e}")
 
-
-                _voting.save()
-                messages.success(request, "Информация о голосовании успешно обновлена.")
-                return redirect("/catalog")
-
-            except ValueError:
-                messages.error(request, "Некорректное значение количества вопросов.")
-                return render(request, 'voting.html', context)
-            except Exception as e:
-                messages.error(request, f"Произошла ошибка: {e}")
-                return render(request, 'voting.html', context)
-
+            _voting.save()
+            return redirect("/catalog")
     except Exception as e:
-        messages.error(request, "Голосование не найдено или ошибка!")  #Выводим пользователю, а не в консоль
-        return redirect("/catalog")
+        print(e)
+        return HttpResponse("Голосование не найдено или ошибка!")
 
     return render(request, 'voting.html', context)
 
