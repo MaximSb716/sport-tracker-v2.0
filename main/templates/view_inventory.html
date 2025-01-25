@@ -85,6 +85,7 @@
                 <th>Наименование заказа</th>
                 <th>Количество</th>
                 <th>Статус</th>
+                <th>Состояние</th>
             </tr>
         </thead>
         <tbody>
@@ -94,6 +95,15 @@
                     <td>{{ item.name }}</td>
                     <td>{{ item.total_quantity }}</td>
                     <td>{{ item.status_display }}</td>
+                    {% if item.status_prep == "one" %}
+                    <td>Новый</td>
+                    {% elif item.status_prep == "one" %}
+                    <td>Использованный</td>
+                    {% elif item.status_prep == "end" %}
+                    <td>Сломанный</td>
+                    {% else %}
+                    <td>Невозможно отследить (у другого человека)</td>
+                    {% endif %}
                 </tr>
             {% endfor %}
         </tbody>
