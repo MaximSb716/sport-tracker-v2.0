@@ -40,6 +40,7 @@ urlpatterns = [
     path('secure_inventory/', secure_inventory, name='secure_inventory'),
     path('user_detail/<int:user_id>/', user_detail, name='user_detail'),
     path('issue_inventory/<int:user_id>/<int:voting_id>/<str:item_name>/', issue_inventory, name='issue_inventory'),
+    path('plan', plan, name='plan'),
     path("", include("main.urls"))
 ]
 

@@ -130,7 +130,7 @@ def profile(request):
             user_inventory = OrderItem.objects.filter(
                 voting__user_orders__user=request.user,
                 status__in=['approved', 'get_from_admin']
-            ).values('name','status', 'image_url').annotate(total_quantity=Sum('quantity'))
+            ).values('name', 'status','image_url').annotate(total_quantity=Sum('quantity'))
 
             inventory_list = []
             for item in user_inventory:
@@ -138,6 +138,7 @@ def profile(request):
                   'name': item['name'],
                   'quantity': item['total_quantity'],
                  'image_url': item['image_url'] if item['image_url'] else '/static/images/default_header.jpg',
+                   'status': dict(OrderItem.STATUS_CHOICES).get(item['status'])
                    })
             context["user_inventory"] = inventory_list
 
@@ -278,50 +279,54 @@ def voting(request):
             if os.listdir(directory):
                 context["url_to_header"] = f"/uploads/votings/admin/{_voting.id}/{os.listdir(directory)[0]}"
 
-        # Передаем BASE_DIR в контекст, чтобы использовать его в шаблоне
-        context['BASE_DIR'] = BASE_DIR
+        # Получение BASE_DIR через settings
+        context['BASE_DIR'] = settings.BASE_DIR
 
         if request.method == "POST":
-            _voting.name = request.POST.get("about_label")
-            _voting.questions_number = request.POST.get("questions_count")
-            _voting.type_of_voting = request.POST.get("type_question0")
+            try:
+                # Убираем изменение имени _voting.name = request.POST.get("about_label")
+                new_questions_number = int(request.POST.get("questions_count"))  # Преобразование и проверка на число
+                new_type_of_voting = request.POST.get("type_question0")
 
-            if request.FILES.get('image', False):
-                image_file = request.FILES['image']
+                if new_questions_number <= 0:
+                    messages.error(request, "Количество вопросов должно быть больше 0.")
+                    return render(request, 'voting.html', context)
 
-                # Путь к папке для сохранения картинки (ВНУТРИ main)
-                upload_dir = os.path.join(BASE_DIR, 'main', 'uploads', 'votings', 'admin', str(_voting.id))
-                print(f"Upload directory: {upload_dir}")  # Для отладки пути
 
-                # Создаем папку, если ее нет
-                os.makedirs(upload_dir, exist_ok=True)
 
-                # Полный путь к новому файлу
-                new_file_path = os.path.join(upload_dir, 'header' + os.path.splitext(image_file.name)[1])
-                print(f"New file path: {new_file_path}")  # Для отладки пути
+                _voting.questions_number = new_questions_number
+                _voting.type_of_voting = new_type_of_voting
 
-                # Удаляем все файлы в папке
-                if os.path.exists(upload_dir):
-                    for file in os.listdir(upload_dir):
-                        file_path = os.path.join(upload_dir, file)
-                        if os.path.isfile(file_path):
-                            os.remove(file_path)
 
-                try:
-                    # Сохраняем новый файл
+                if request.FILES.get('image', False):
+                    image_file = request.FILES['image']
+                    upload_dir = os.path.join(settings.BASE_DIR, 'main', 'uploads', 'votings', 'admin', str(_voting.id))
+                    os.makedirs(upload_dir, exist_ok=True)
+                    # Удаляем старый файл, если он есть
+                    old_file_path = os.path.join(upload_dir, 'header' + os.path.splitext(_voting.name)[1])
+                    if os.path.exists(old_file_path):
+                        os.remove(old_file_path)
+                    new_file_path = os.path.join(upload_dir, 'header' + os.path.splitext(image_file.name)[1])
+
                     with open(new_file_path, 'wb+') as destination:
                         for chunk in image_file.chunks():
                             destination.write(chunk)
-                # Не сохраняем путь в базе данных!
-                # _voting.image = ...  # Убрали запись пути в БД!
-                except Exception as e:
-                    print(f"Ошибка при сохранении файла: {e}")
 
-            _voting.save()
-            return redirect("/catalog")
+
+                _voting.save()
+                messages.success(request, "Информация о голосовании успешно обновлена.")
+                return redirect("/catalog")
+
+            except ValueError:
+                messages.error(request, "Некорректное значение количества вопросов.")
+                return render(request, 'voting.html', context)
+            except Exception as e:
+                messages.error(request, f"Произошла ошибка: {e}")
+                return render(request, 'voting.html', context)
+
     except Exception as e:
-        print(e)
-        return HttpResponse("Голосование не найдено или ошибка!")
+        messages.error(request, "Голосование не найдено или ошибка!")  #Выводим пользователю, а не в консоль
+        return redirect("/catalog")
 
     return render(request, 'voting.html', context)
 
@@ -721,3 +726,14 @@ def issue_inventory(request, user_id, voting_id, item_name):
 
     context = {'user': user, 'voting': voting, 'url_to_header': url_to_header}
     return render(request, 'issue_inventory.html', context)
+
+def plan(request):
+    context = {}
+    """Отображает список планов закупок."""
+    #purchase_plans = PurchasePlan.objects.all().order_by('-creation_date') # Извлекаем все планы, сортировка по дате
+    #context = {
+    #    'purchase_plans': purchase_plans,
+    #    'is_admin': request.user.is_superuser,  # Проверяем, является ли пользователь администратором
+    #    'is_auth': request.user.is_authenticated,  # Проверяем, авторизован ли пользователь
+    #}
+    return render(request, 'plan.html', context)

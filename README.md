@@ -26,8 +26,6 @@ Linux (VSC):
 
 * OK
 
-* Отчистите все файлы в папках uploads !
-
 * venv activate ``source .venv/bin/activate``
 
 * Install Lib ``pip install -r requirements.txt``
@@ -35,8 +33,6 @@ Linux (VSC):
 * Make migrations ``python manage.py makemigrations``
 
 * Apply migrations ``python manage.py migrate``
-  
-* Создай superuser ``python manage.py createsuperuser``
 
 * Run server ``python manage.py runserver``
 
@@ -55,15 +51,11 @@ Linux (PyCharm):
   
 * Right-click on Terminal
 
-* Отчистите все файлы в папках uploads !
-
 * Install Lib ``pip install Django`` ``pip install Pillow``
   
 * Make migrations ``python manage.py makemigrations``
 
 * Apply migrations ``python manage.py migrate``
-
-* Создай superuser ``python manage.py createsuperuser``
 
 * Run server ``python manage.py runserver``
 

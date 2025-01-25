@@ -5,6 +5,7 @@
             <a class="options" href="{% url 'catalog' %}">Инвентарь</a>
             {% if request.user.is_authenticated %}
                 {% if request.user.is_superuser %}
+                    <a class="options" href="{% url 'plan' %}">Составление плана</a>
                     <a class="options" href="{% url 'secure_inventory' %}">Закрепить инвентарь</a>
                     <a class="options" href="{% url 'applications' %}">Заявки пользователей</a>
                 {% else %}
