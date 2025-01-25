@@ -310,12 +310,9 @@ def voting(request):
                             os.remove(file_path)
 
                 try:
-                    # Сохраняем новый файл
                     with open(new_file_path, 'wb+') as destination:
                         for chunk in image_file.chunks():
                             destination.write(chunk)
-                # Не сохраняем путь в базе данных!
-                # _voting.image = ...  # Убрали запись пути в БД!
                 except Exception as e:
                     print(f"Ошибка при сохранении файла: {e}")
 
@@ -738,10 +735,8 @@ def plan(request):
 def view_inventory(request):
     """Отображает информацию о текущем инвентаре, суммируя по пользователю, названию и статусу."""
 
-    # 1. Получаем все OrderItem со статусами 'get_from_admin' или 'approved'
     order_items = OrderItem.objects.filter(status__in=['get_from_admin', 'approved']).select_related('voting').order_by('name')
 
-    # 2. Группируем элементы по пользователю, названию и статусу
     grouped_items = defaultdict(lambda: {'total_quantity': 0, 'user': set(), 'status': None})
 
     for item in order_items:
@@ -751,15 +746,28 @@ def view_inventory(request):
         grouped_items[key]['total_quantity'] += item.quantity
         grouped_items[key]['user'].add(order.user.username)
         grouped_items[key]['status'] = item.status
-    # 3. Преобразуем сгруппированные данные в список для шаблона
     inventory = []
     for (user, name, status), data in grouped_items.items():
         inventory.append({
             'user': ', '.join(data['user']),
             'name': name,
             'total_quantity': data['total_quantity'],
-            'status_display': dict(OrderItem.STATUS_CHOICES).get(data['status'])
+            'status_display': dict(OrderItem.STATUS_CHOICES).get(data['status']),
+            'status_prep': 'Невозможно отслеживать'
             })
 
-    context = {'inventory': inventory}
+    votings = Votings.objects.all()
+
+    for item in votings:
+        inventory.append({
+            'user': 'admin',
+            'name': item.name,
+            'total_quantity': item.questions_number,
+            'status_display': 'Находится в собственности админа',
+            'status_prep': item.type_of_voting
+        })
+
+    context = {
+        'inventory': inventory
+    }
     return render(request, 'view_inventory.html', context)
