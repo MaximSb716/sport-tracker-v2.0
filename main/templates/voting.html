@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="{% static 'profile.css' %}">
     <link rel="stylesheet" href="{% static 'about_us.css' %}">
     <link rel="stylesheet" href="{% static 'header.css' %}">
-    <title>Homepage</title>
+    <title>Изменение</title>
     <link rel="icon" href="{% static 'img/icon.svg' %}" type="image/svg+xml">
     <style>
       .wrapper {
@@ -81,7 +81,7 @@
 {% if request.user == author %}
 <script>
     function confirmFunction() {
-      let text = "Вы точно хотите удалить голосование?\nГолосование будет удалено безвозвратно!\nМы не несём ответственности за ваши дальшейшие действия.";
+      let text = "Вы точно хотите удалить данный предмет?\nИнвентарь будет удалено безвозвратно!\nМы не несём ответственности за ваши дальшейшие действия.";
       if (confirm(text) == true) {
         window.location.replace("voting/delete?id={{ voting_id }}");
       } else {

@@ -81,3 +81,23 @@ class UserOrder(models.Model):
         verbose_name = "Заказ пользователя"
         verbose_name_plural = "Заказы пользователей"
 
+class Item(models.Model):
+    """
+    Модель для представления предмета инвентаря.
+    """
+    STATUS_CHOICES = [
+        ('pending', 'На рассмотрении'),
+        ('completed', 'Выполнено'),
+    ]
+    name = models.CharField(max_length=255, verbose_name="Название предмета")
+    quantity = models.PositiveIntegerField(default=1, verbose_name="Количество", blank=True, null=True)
+    price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Цена", blank=True, null=True)
+    supplier = models.CharField(max_length=255, verbose_name="Планируемый поставщик", blank=True, null=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name='Статус плана')
+
+    def __str__(self):
+        return f"{self.name} ({self.quantity})"
+
+    class Meta:
+        verbose_name = "Предмет инвентаря"
+        verbose_name_plural = "Предметы инвентаря"

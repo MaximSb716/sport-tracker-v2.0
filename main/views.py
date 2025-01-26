@@ -359,8 +359,8 @@ def delete_voting(request):
             context["IsExist"] = True
             context["about_label"] = _voting[0].name
             context["author"] = _voting[0].author
+            context['questions_number'] = _voting[0].questions_number
             context["voting_id"] = _voting[0].id
-
             directory = f"main/uploads/users/admin"
             context["url_to_avatar"] = f"/uploads/users/admin/{os.listdir(directory)[0]}"
             directory = f"main/uploads/votings/admin/{_voting[0].id}"
@@ -721,16 +721,6 @@ def issue_inventory(request, user_id, voting_id, item_name):
     context = {'user': user, 'voting': voting, 'url_to_header': url_to_header}
     return render(request, 'issue_inventory.html', context)
 
-def plan(request):
-    context = {}
-    """Отображает список планов закупок."""
-    #purchase_plans = PurchasePlan.objects.all().order_by('-creation_date') # Извлекаем все планы, сортировка по дате
-    #context = {
-    #    'purchase_plans': purchase_plans,
-    #    'is_admin': request.user.is_superuser,  # Проверяем, является ли пользователь администратором
-    #    'is_auth': request.user.is_authenticated,  # Проверяем, авторизован ли пользователь
-    #}
-    return render(request, 'plan.html', context)
 
 def view_inventory(request):
     """Отображает информацию о текущем инвентаре, суммируя по пользователю, названию и статусу."""
@@ -771,3 +761,39 @@ def view_inventory(request):
         'inventory': inventory
     }
     return render(request, 'view_inventory.html', context)
+
+
+def item_list(request):
+    """Отображает список предметов."""
+    items = Item.objects.all().order_by('name')
+    return render(request, 'item_list.html', {'items': items})
+
+def item_create(request):
+    """Создает новый предмет."""
+    if request.method == 'POST':
+        item_form = ItemForm(request.POST)
+        if item_form.is_valid():
+            item = item_form.save()
+            return redirect('item_list')
+    else:
+        item_form = ItemForm()
+    return render(request, 'item_form.html', {'item_form': item_form, 'action': 'create'})
+
+def item_update(request, item_id):
+    """Обновляет существующий предмет."""
+    item = get_object_or_404(Item, pk=item_id)
+    if request.method == 'POST':
+        item_form = ItemForm(request.POST, instance=item)
+        if item_form.is_valid():
+            item = item_form.save()
+            return redirect('item_list')
+    else:
+        item_form = ItemForm(instance=item)
+    return render(request, 'item_form.html', {'item_form': item_form, 'action':'update', 'item_id': item_id})
+
+def item_delete(request, item_id):
+    item = get_object_or_404(Item, pk=item_id)
+    if request.method == 'POST':
+        item.delete()
+        return redirect('item_list')
+    return render(request, 'item_delete.html', {'item': item})

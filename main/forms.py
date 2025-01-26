@@ -84,3 +84,15 @@ class UploadImageForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+class ItemForm(forms.ModelForm):
+  class Meta:
+    model = Item
+    fields = ['name', 'quantity', 'price', 'status', 'supplier' ]
+    widgets = {
+      'name': forms.TextInput(attrs={'class': 'form-control'}),
+      'quantity': forms.NumberInput(attrs={'class': 'form-control'}),
+      'price': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+      'status': forms.Select(attrs={'class':'form-select'}),
+        'supplier': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Название поставщика'})
+    }

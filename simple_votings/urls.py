@@ -28,7 +28,6 @@ urlpatterns = [
     path('about_us/', about_us, name='about_us'),
     path('catalog/', catalog, name='catalog'),
     path('profile/', profile, name='profile'),
-    path('survey/', survey, name='survey'),
     path('voting', voting, name='voting'),
     path('voting/new', new_voting, name='voting/new'),
     path('voting/delete', delete_voting, name='voting/delete'),
@@ -40,8 +39,11 @@ urlpatterns = [
     path('secure_inventory/', secure_inventory, name='secure_inventory'),
     path('user_detail/<int:user_id>/', user_detail, name='user_detail'),
     path('issue_inventory/<int:user_id>/<int:voting_id>/<str:item_name>/', issue_inventory, name='issue_inventory'),
-    path('plan', plan, name='plan'),
     path('view_inventory/', view_inventory, name='view_inventory'),
+    path('items/', item_list, name='item_list'),
+    path('items/create/', item_create, name='item_create'),
+    path('items/update/<int:item_id>/', item_update, name='item_update'),
+    path('items/delete/<int:item_id>/', item_delete, name='item_delete'),
     path("", include("main.urls"))
 ]
 

@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="{% static 'survey.css' %}">
     <link rel="stylesheet" href="{% static 'profile.css' %}">
     <link rel="stylesheet" href="{% static 'header.css' %}">
-    <title>Homepage</title>
+    <title>Удаление</title>
     <link rel="icon" href="{% static 'img/icon.svg' %}" type="image/svg+xml">
     <style>
         .wrapper {
@@ -32,42 +32,23 @@
     <div class="container">
     <div class="item">
         <div class="card">
-        <h2>Вы действительно хотите удалить следующее голосование?</h2>
+        <h2>Вы действительно хотите удалить следующий инвентарь?</h2>
+    </div>
+    <div class="wrapper exmpl"><img src="{{ url_to_header }}" alt="Аватар пользователя"></div>
+      <div class="card">
+        {% if IsExist %}
+          <h1>{{ about_label }} - {{ questions_number }} шт.</h1>
         <form method="post">
             {% csrf_token %}
             <input hidden name="voting_id" value="{{ voting_id }}">
             <button type="submit" class="card_link">УДАЛИТЬ</button>
         </form>
-    </div>
-    <div class="wrapper exmpl"><img src="{{ url_to_header }}" alt="Аватар пользователя"></div>
-      <div class="card">
-        {% if IsExist %}
-        <h3>{{ about_label }}</h3>
-        <img src="{{ url_to_avatar }}" alt="Аватар пользователя" class="profile-avatar">
-        Автор: {{ author }}
-        <p>{{ about_description }}</p>
-            {% for i in data %}
-            <div class="question">
-                <p>{{ i.questions.question }}</p>
-                <div class="options_cards">
-                {% if i.questions.type_of_voting == "one" %}
-                    {% for ans in i.answers %}
-                        <label><input type="radio" name="{{i.questions.id}}" value="{{ ans.id }}"> {{ ans.answer }}</label><br>
-                    {% endfor %}
-                {% else %}
-                    {% for ans in i.answers %}
-                        <label><input type="checkbox" name="{{i.questions.id}}" value="{{ ans.id }}"> {{ ans.answer }}</label><br>
-                    {% endfor %}
-                {% endif %}
-                </div>
-            {% endfor %}
         {% else %}
-        <h3>Голосование не найдено!</h3>
+        <h3>Инвентарь не найден!</h3>
         {% endif %}
       </div>
     </div>
 </div>
-
 </body>
 <footer>
 </footer>
