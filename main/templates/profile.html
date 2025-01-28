@@ -45,7 +45,15 @@
              <a href="{% url 'view_inventory' %}" class="inventory-button">Просмотр всего инвентаря</a>
           </div>
         </ul>
-
+          {% if is_admin %}
+        <h2>Отчет</h2>
+        <ul>
+          <div class="button-container">
+             <a href="{% url 'view_reports' %}" class="inventory-button">Просмотр отчета об использовании</a>
+          </div>
+        </ul>
+          {% else %}
+          {% endif %}
       </div>
         {% if is_admin %}
         {% else %}

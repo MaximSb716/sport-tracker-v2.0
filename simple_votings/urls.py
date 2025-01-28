@@ -44,6 +44,7 @@ urlpatterns = [
     path('items/create/', item_create, name='item_create'),
     path('items/update/<int:item_id>/', item_update, name='item_update'),
     path('items/delete/<int:item_id>/', item_delete, name='item_delete'),
+    path('view_reports/', view_reports, name='view_reports'),
     path("", include("main.urls"))
 ]
 

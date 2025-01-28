@@ -101,3 +101,25 @@ class Item(models.Model):
     class Meta:
         verbose_name = "Предмет инвентаря"
         verbose_name_plural = "Предметы инвентаря"
+
+class UsageReport(models.Model):
+    """
+    Модель для отчетов об использовании предметов
+    """
+    STATUS_CHOICES = [
+        ('one', 'Новый'),
+        ('multi', 'Использованный'),
+        ('end', 'Сломанный'),
+    ]
+    item_name = models.CharField(max_length=255, verbose_name="Имя предмета")
+    user_name = models.CharField(max_length=255, verbose_name="Имя пользователя")
+    quantity = models.PositiveIntegerField(default=1, verbose_name="Количество")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='new', verbose_name="Состояние")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата отчета")
+
+    def __str__(self):
+        return f"Отчет для {self.item_name} пользователя {self.user_name} ({self.get_status_display()})"
+
+    class Meta:
+        verbose_name = "Отчет об использовании"
+        verbose_name_plural = "Отчеты об использовании"

@@ -567,24 +567,45 @@ def approve_item(request):
     if item_id:
         item = get_object_or_404(OrderItem, id=item_id)
         try:
-            if item.voting:
-                if item.voting.questions_number >= item.quantity:
+            with transaction.atomic():
+                user_name = "Unknown"
+                if item.orders.first():
+                    user_name = item.orders.first().user.username
+
+                status = 'used'  # Статус по умолчанию
+                if item.voting and item.voting.type_of_voting:  # Если есть голосование и тип голосования
+                    status = item.voting.type_of_voting
+
+                if item.voting:
+                    if item.voting.questions_number >= item.quantity:
+                        item.status = 'approved'
+                        item.voting.questions_number -= item.quantity
+                        item.voting.save()
+                        item.save()
+
+                        UsageReport.objects.create(
+                            item_name=item.name,
+                            user_name=user_name,
+                            quantity=item.quantity,
+                            status=status
+                        )
+                        messages.success(request,
+                                         f"Статус '{item.name}' успешно изменен на 'Одобрено'. Количество инвентаря уменьшено.")
+                    else:
+                        messages.error(request, f"Недостаточно инвентаря для выполнения действия.")
+                else:
                     item.status = 'approved'
-                    item.voting.questions_number -= item.quantity
-                    item.voting.save()
                     item.save()
 
-                    messages.success(request, f"Статус '{item.name}' успешно изменен на 'Одобрено'. Количество инвентаря уменьшено.")
-                else:
-                    messages.error(request, f"Недостаточно инвентаря для выполнения действия.")
-            else:
-                item.status = 'approved'
-                item.save()
+                    UsageReport.objects.create(
+                        item_name=item.name,
+                        user_name=user_name,
+                        quantity=item.quantity,
+                        status=status
+                    )
 
         except Exception as e:
-            pass
-    else:
-        pass
+            messages.error(request, f"Ошибка при изменении статуса элемента. Обратитесь к администратору")
     return redirect('/applications')
 
 
@@ -660,24 +681,22 @@ def issue_inventory(request, user_id, voting_id, item_name):
     if request.method == 'POST':
         quantity_str = request.POST.get('quantity')
         if not quantity_str:
-            messages.error(request, "Необходимо указать количество.")
-            return render(request, 'issue_inventory.html',
-                          {'user': user, 'voting': voting, 'url_to_header': url_to_header})
+           messages.error(request, "Необходимо указать количество.")
+           return render(request, 'issue_inventory.html', {'user': user, 'voting': voting, 'url_to_header': url_to_header})
         try:
             quantity = int(quantity_str)
         except ValueError:
             messages.error(request, "Указано некорректное количество.")
-            return render(request, 'issue_inventory.html',
-                          {'user': user, 'voting': voting, 'url_to_header': url_to_header})
+            return render(request, 'issue_inventory.html', {'user': user, 'voting': voting, 'url_to_header': url_to_header})
 
         if quantity <= 0:
             messages.error(request, "Количество должно быть больше 0.")
-            return render(request, 'issue_inventory.html',
-                          {'user': user, 'voting': voting, 'url_to_header': url_to_header})
+            return render(request, 'issue_inventory.html', {'user': user, 'voting': voting, 'url_to_header': url_to_header})
 
-        with transaction.atomic():
-            try:
-                # Проверяем, есть ли у пользователя заказ для этого голосования
+
+        try:
+            with transaction.atomic():
+                 # Проверяем, есть ли у пользователя заказ для этого голосования
                 user_order = UserOrder.objects.filter(user=user, voting=voting).first()
 
                 if not user_order:
@@ -688,7 +707,7 @@ def issue_inventory(request, user_id, voting_id, item_name):
                 existing_item = OrderItem.objects.filter(
                     name=item_name,
                     voting=voting,
-                     status='get_from_admin',
+                    status='get_from_admin',
                     orders__user=user
                 ).first()
 
@@ -712,11 +731,21 @@ def issue_inventory(request, user_id, voting_id, item_name):
                 voting.questions_number -= quantity
                 voting.save()
 
+               # Добавляем запись в UsageReport
+                UsageReport.objects.create(
+                   item_name=item_name,
+                   user_name=user.username,
+                   quantity=quantity,
+                    status=voting.type_of_voting
+                  )
+
+
                 messages.success(request, f"Заказ '{item_name}' для пользователя {user.username} успешно создан.")
                 return redirect('/applications')
 
-            except Exception as e:
-                messages.error(request, f"Ошибка при создании заказа: {e}")
+        except Exception as e:
+            pass
+
 
     context = {'user': user, 'voting': voting, 'url_to_header': url_to_header}
     return render(request, 'issue_inventory.html', context)
@@ -797,3 +826,14 @@ def item_delete(request, item_id):
         item.delete()
         return redirect('item_list')
     return render(request, 'item_delete.html', {'item': item})
+
+def view_reports(request):
+    """
+    Отображает отчеты об использовании предметов
+    """
+    reports = UsageReport.objects.all()  # получение отчетов из базы данных
+
+    context = {
+        'reports': reports
+    }
+    return render(request, 'view_reports.html', context)
