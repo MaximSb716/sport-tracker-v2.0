@@ -1,0 +1,57 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'catalog_cards.css' %}">
+    <link rel="stylesheet" href="{% static 'header.css' %}">
+    <title>Пользователи</title>
+    <link rel="icon" href="{% static 'img/icon.svg' %}" type="image/svg+xml">
+    <style>
+      .wrapper {
+        width: auto;
+        height: 300px;
+      }
+      .exmpl {
+        overflow: hidden;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .exmpl img {
+        height: auto;
+        width: 100%;
+      }
+    </style>
+</head>
+{% include 'header.html' %}
+<body>
+    <div class="container">
+        {% for category in data %}
+        <div class="item">
+          <div class="wrapper exmpl"><img src="{{category.url_to_header}}" alt="Шапка опроса"></div>
+          <div class="card">
+            <h3>Наименование: {{category.category.name}}</h3>
+            <p>{{category.category.questions_number }} шт.</p>
+             {% if category.category.type_of_voting == "one" %}
+                <p>Состояние: Новый</p>
+              {% elif category.category.type_of_voting == "multi" %}
+                <p>Состояние: Использованный</p>
+              {% else %}
+                <p>Состояние: Сломанный</p>
+              {% endif %}
+              {% csrf_token %}
+              {% if is_admin %}
+                  <a class="card_link" href="{% url 'issue_inventory' user_id=user.id voting_id=category.category.id item_name=category.category.name %}">Выдать пользователю</a>
+              {% else %}
+                  <a class="card_link">Чтобы сделать запрос, зайдите в аккаунт</a>
+              {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+    </div>
+</body>
+<footer>
+</footer>
+</html>

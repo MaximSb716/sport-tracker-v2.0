@@ -1,0 +1,56 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'survey.css' %}">
+    <link rel="stylesheet" href="{% static 'profile.css' %}">
+    <link rel="stylesheet" href="{% static 'header.css' %}">
+    <title>Удаление</title>
+    <link rel="icon" href="{% static 'img/icon.svg' %}" type="image/svg+xml">
+    <style>
+        .wrapper {
+          width: auto;
+          height: 300px;
+          border: 2px solid #515151;
+        }
+        .exmpl {
+          overflow: hidden;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+        }
+        .exmpl img {
+          height: auto;
+          width: 100%;
+        }
+      </style>
+</head>
+{% include 'header.html' %}
+<body>
+    <div class="container">
+    <div class="item">
+        <div class="card">
+        <h2>Вы действительно хотите удалить следующий инвентарь?</h2>
+    </div>
+    <div class="wrapper exmpl"><img src="{{ url_to_header }}" alt="Аватар пользователя"></div>
+      <div class="card">
+        {% if IsExist %}
+          <h1>{{ about_label }} - {{ questions_number }} шт.</h1>
+        <form method="post">
+            {% csrf_token %}
+            <input hidden name="voting_id" value="{{ voting_id }}">
+            <button type="submit" class="card_link">УДАЛИТЬ</button>
+        </form>
+        {% else %}
+        <h3>Инвентарь не найден!</h3>
+        {% endif %}
+      </div>
+    </div>
+</div>
+</body>
+<footer>
+</footer>
+
+</html>
