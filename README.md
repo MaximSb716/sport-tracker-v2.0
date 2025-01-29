@@ -15,7 +15,7 @@ Sport Tracker v2.0 - это современное веб-приложение �
 
 ### 1. Клонирование репозитория
 ```bash
-git clone https://github.com/your-repo/sport-tracker-v2.0.git
+git clone https://github.com/MaximSb716/sport-tracker-v2.0.git
 cd sport-tracker-v2.0
 ```
 
