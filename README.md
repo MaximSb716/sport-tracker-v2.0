@@ -37,6 +37,7 @@ pip install -r requirements.txt
 
 ### 5. Применение миграций
 ```bash
+python manage.py migrate --run-syncdb # если сайт не работает правильно
 python manage.py makemigrations
 python manage.py migrate
 ```
