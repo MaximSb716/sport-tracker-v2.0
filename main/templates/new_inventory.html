@@ -1,0 +1,105 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" xmlns="" xmlns="">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'header.css' %}">
+    <link rel="stylesheet" href="{% static 'new_inventory.css' %}">
+    <title>Создать инвентарь</title>
+    <link rel="icon" href="{% static 'img/icon.svg' %}" type="image/svg+xml">
+</head>
+{% include 'header.html' %}
+{% if is_auth %}
+<body>
+    <div class="about_us_conteiner">
+        <h1>Создание инвентаря</h1>
+        <form action="/inventory/new" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div>
+                <p><b>Напишите заголовок инвентаря</b></p>
+                <input type="text" name="about_label" maxlength="100" required id="id_about_label">
+            </div>
+            <div>
+                <p><b>Добавьте изображение</b></p>
+                <input type="file" name="image" required id="id_image" accept="image/*">
+            </div>
+            <div>
+                <p><b>Выберите колличество инвентаря</b></p>
+                <input type="number" name="questions_count" required id="id_questions_count" min="1" max="100" onchange="OnChangeQuestionsCount()" value="1">
+            </div>
+            <div id="Questions">
+                <div id="Question0">
+                    <div>
+                        <p><b>Выберите состояние</b></p>
+                        <input type="radio" name="type_question0" maxlength="500" required value="one" id="one" checked>
+                        <label for="one">Новый</label>
+                        <input type="radio" name="type_question0" maxlength="500" required value="multi" id="multi">
+                        <label for="multi">Использованный</label>
+                        <input type="radio" name="type_question0" maxlength="500" required value="end" id="end">
+                        <label for="end">Сломанный</label>
+                    </div>
+                </div>
+            </div>
+
+            <input type="submit" value="Подтвердить">
+        </form>
+    </div>
+</body>
+<!--
+<script>
+let questions_value = 1
+const AnswersCount = [2]
+const QuestionsArr = [document.getElementById("Question0").outerHTML]
+
+function OnChangeAnswersCount(id) {
+    let text = ""
+    let num = document.getElementById("id_options_count" + id).value
+    if (AnswersCount[id] != num){
+        for(let i = 0; i < num; i++){
+            let temp = ''
+            if (i < AnswersCount[id]){
+                temp = document.getElementsByName("option" + id + "_" + i)[0].value;
+            }
+            text += '<p><input type=text name="option'+ id + '_' + i + '" maxlength="70" size="70" placeholder="Вариант ' + (i+1) + '" required value=' + temp + '></p>';
+        }
+
+        document.getElementById("Answers"+id).innerHTML = text;
+        AnswersCount[id] = num;
+    }
+}
+
+function OnChangeQuestionsCount(){
+    let num = Number(document.getElementById("id_questions_count").value)
+    if (questions_value != num){
+        if (Number(questions_value) <= Number(num)){
+            for(let i = questions_value; i < num; i++){
+                AnswersCount.push(2);
+                document.getElementById("Question" + i).innerHTML = NewQuestion(i);
+            }
+        } else{
+            for(let i = (num); i < questions_value; i++){
+                AnswersCount.pop();
+                document.getElementById("Question" + (i)).innerHTML = "";
+            }
+        }
+    }
+    questions_value = num;
+}
+
+function NewQuestion(id){
+    return '<div><p><b>Напиши вопрос №'+(id+1)+'</b></p><input type="text" name="question'+id+'" maxlength="500" required placeholder="Вопрос"><p><b>Выбери тип голосования</b></p><input type="radio" name="type_question'+id+'" maxlength="500" required value="one" id="one'+id+'" checked><label for="one'+id+'">Одиночный</label><input type="radio" name="type_question'+id+'" maxlength="500" required value="multi" id="multi'+id+'"><label for="multi'+id+'">Множественный</label><p><b>Выбери колличество вариантов ответа</b></p><input type="number" name="options_count'+id+'" min="1" max="20" required id="id_options_count'+id+'" onchange="OnChangeAnswersCount('+id+')" value="2"></div><div id="Answers'+id+'"><p><input type="text" name="option'+id+'_0" maxlength="70" size="70" placeholder="Вариант 1" required></p><p><input type="text" name="option'+id+'_1" maxlength="70" size="70" placeholder="Вариант 2" required></p></div>';
+}
+</script>
+-->
+{% else %}
+<body>
+    <div class="about_us_conteiner">
+        <h1>Создай своё голосование!</h1>
+        <h2>Для создания своего голосования нужно зарегистрироваться!</h2>
+        <a href="{% url 'sign_in' %}">Войти</a>
+        <a href="{% url 'sign_up' %}">Зарегистрироваться</a>
+    </div>
+</body>
+{% endif %}
+</html>

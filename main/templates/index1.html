@@ -1,0 +1,40 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+    <link rel="stylesheet" href="{% static 'header.css' %}">
+    <title>Главная</title>
+    <link rel="icon" href="{% static 'img/icon.svg' %}" type="image/svg+xml">
+</head>
+{% include 'header.html' %}
+
+<body>
+<div class="body_main">
+    <div class="info_main">
+        Упрости себе жизнь с нашей надежной системой <br> хранения спортивного инвентаря
+    </div>
+    <div class="info_sl">
+        “Sport Tracker” - это платформа для эффективного управления спортивным инвентарем,
+        предоставляющая полный контроль и прозрачность в учете. Сервис позволяет отслеживать
+        широкий спектр оборудования, обеспечивая удобство и простоту использования для команд
+        и индивидуальных спортсменов. “Sport Tracker” - это сообщество организованных спортсменов,
+        постоянно развивающееся для удовлетворения потребностей своих пользователей.
+        <img class="main_img" src="{% static 'img/logo.png' %}">
+    </div>
+</div>
+</body>
+    
+<footer>
+</footer>
+
+</html>
+
+
+
+
+
+
+

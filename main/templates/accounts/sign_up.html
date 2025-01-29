@@ -1,0 +1,29 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'header.css' %}">
+    <link rel="stylesheet" href="{% static 'sign.css' %}">
+    <title>Регистрация</title>
+    <link rel="icon" href="{% static 'img/icon.svg' %}" type="image/svg+xml">
+</head>
+{% include 'header.html' %}
+<body>
+    <div class="registration-box1">
+        <h1>Регистрация</h1>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <a class="no_account" href="{% url 'sign_in' %}">Уже есть аккаунт?</a>
+            <button class="registration-button" type="submit">Зарегистрироваться</button>
+        </form>
+    </div>
+</body>
+
+
+<footer>
+
+</footer>
+</html>
