@@ -88,4 +88,4 @@ sport-tracker-v2.0/
 - **Сбродов Максим Александрович** - [GitHub](https://github.com/MaximSb716)
 - **Баричев Артем** - [GitHub](https://github.com/Artem2062)
 - **Лахтиков Дмитрий Александрович** - [GitHub](https://github.com/Lahtikov)
-- **Чернилевкий Александр**
+- **Чернилевкий Александр Сергеевич** - [GitHub](https://github.com/ALEKSANDR7899)
