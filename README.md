@@ -19,35 +19,30 @@ git clone https://github.com/MaximSb716/sport-tracker-v2.0.git
 cd sport-tracker-v2.0
 ```
 
-### 2. Переключение на ветку `simple-votings`
-```bash
-git checkout simple-inventorys
-```
-
-### 3. Создание виртуального окружения
+### 2. Создание виртуального окружения
 ```bash
 python -m venv venv
 source venv/bin/activate
 ```
 
-### 4. Установка зависимостей
+### 3. Установка зависимостей
 ```bash
 pip install -r requirements.txt
 ```
 
-### 5. Применение миграций
+### 4. Применение миграций
 ```bash
 python manage.py migrate --run-syncdb # если сайт не работает правильно
 python manage.py makemigrations
 python manage.py migrate
 ```
 
-### 6. Создание аккаунта админа
+### 5. Создание аккаунта админа
 ```bash
 python manage.py createsuperuser
 ```
 
-### 7. Запуск сервера
+### 6. Запуск сервера
 ```bash
 python manage.py runserver
 ```
@@ -74,7 +69,7 @@ sport-tracker-v2.0/
 │   ├── tests.py        # Файлы с тестами для тестирования функциональности приложения 'main'
 │   ├── urls.py         # Маршрутизация URL-запросов к представлениям приложения 'main'
 │   └── views.py        # Логика обработки запросов и рендеринга шаблонов приложения 'main' (представления)
-├── sipmle_votings/     # Основной каталог настроек проекта и, возможно, приложение для простых голосований (описание неточно)
+├── sport_tracker/     # Основной каталог настроек проекта и, возможно, приложение для простых голосований (описание неточно)
 │   ├── __init__.py     # Файл инициализации пакета Python
 │   ├── asgi.py         # Настройки ASGI для асинхронных веб-серверов (для production)
 │   ├── settings.py     # Основные настройки Django проекта (база данных, приложения, ключи, и т.д.)
