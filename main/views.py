@@ -97,51 +97,62 @@ def catalog(request):
             return render(request, 'catalog.html', context)
     return render(request, 'catalog.html', context)
 
+@login_required
 def profile(request):
     context = {
-        "is_auth": False,
+        "is_auth": True,
         "is_admin": False,
         "user_inventory": [],
+        "form": UploadImageForm(),
+        "url_to_avatar": "",
     }
 
     if request.user.is_superuser:
         context["is_admin"] = True
-    if request.user.is_authenticated:
-        context["is_auth"] = True
-        directory = f"main/uploads/users/{request.user.id}" if not request.user.is_superuser else  f"main/uploads/users/admin"
-        context["url_to_avatar"] = ""
-        if os.path.exists(directory) and len(os.listdir(directory)) != 0:
-            context["url_to_avatar"] = f"/uploads/users/{request.user.id}/{os.listdir(directory)[0]}" if not request.user.is_superuser else  f"/uploads/users/admin/{os.listdir(directory)[0]}"
+        directory = f"main/uploads/users/admin/{request.user.id}"
+    else:
+        directory = f"main/uploads/users/{request.user.id}"
 
-        context["form"] = UploadImageForm()
+    if os.path.exists(directory) and os.listdir(directory):
+        avatar_filename = os.listdir(directory)[0]
+        context["url_to_avatar"] = f"/uploads/users/admin/{request.user.id}/{avatar_filename}" if request.user.is_superuser else f"/uploads/users/{request.user.id}/{avatar_filename}"
 
-        if request.method == "POST":
-            form = UploadImageForm(request.POST, request.FILES)
-            if form.is_valid():
+    if request.method == "POST":
+        form = UploadImageForm(request.POST, request.FILES)
+        if form.is_valid():
+            try:
                 if os.path.exists(directory):
-                    shutil.rmtree(directory)
+                     for filename in os.listdir(directory):
+                         file_path = os.path.join(directory, filename)
+                         if os.path.isfile(file_path):
+                            os.remove(file_path)
                 os.makedirs(directory, exist_ok=True)
-                f = request.FILES["image"]
+                f = request.FILES['image']
                 extension = os.path.splitext(str(f))[1]
-                with open(os.path.join(directory, f"avatar{extension}"), "wb+") as sv:
+                unique_name = f"header{extension}"
+                with open(os.path.join(directory, unique_name), "wb+") as sv:
                     sv.write(f.read())
+                messages.success(request, "Аватар успешно обновлен.")
                 return redirect("/profile")
+            except Exception as e:
+                messages.error(request, f"Ошибка при загрузке аватара. Обратитесь к администратору")
+        else:
+            messages.error(request, "Ошибка валидации формы. Пожалуйста, проверьте данные.")
 
-        if not request.user.is_superuser:
-            user_inventory = OrderItem.objects.filter(
-                voting__user_orders__user=request.user,
-                status__in=['approved', 'get_from_admin']
-            ).values('name', 'status','image_url').annotate(total_quantity=Sum('quantity'))
+    if not request.user.is_superuser:
+        user_inventory = OrderItem.objects.filter(
+            voting__user_orders__user=request.user,
+            status__in=['approved', 'get_from_admin']
+        ).values('name', 'status').annotate(total_quantity=Sum('quantity'))
 
-            inventory_list = []
-            for item in user_inventory:
-                 inventory_list.append({
-                  'name': item['name'],
-                  'quantity': item['total_quantity'],
-                 'image_url': item['image_url'] if item['image_url'] else '/static/images/default_header.jpg',
-                   'status': dict(OrderItem.STATUS_CHOICES).get(item['status'])
-                   })
-            context["user_inventory"] = inventory_list
+        inventory_list = []
+        for item in user_inventory:
+            inventory_list.append({
+                'name': item['name'],
+                'quantity': item['total_quantity'],
+                'status': dict(OrderItem.STATUS_CHOICES).get(item['status'])
+            })
+        context["user_inventory"] = inventory_list
 
     return render(request, 'profile.html', context)
 
@@ -429,33 +440,28 @@ def add_voting(request):
 
         try:
             with transaction.atomic():
-                # Проверяем, существует ли уже такой UserOrder
                 existing_order = UserOrder.objects.filter(
                     user=request.user,
                     voting=_voting
                 ).first()
 
                 if not existing_order:
-                    # Если UserOrder не существует, создаем новый
                     new_order = UserOrder.objects.create(user=request.user, voting=_voting)
                 else:
-                    new_order = existing_order  # используем существующий
+                    new_order = existing_order
 
-                # Проверяем, существует ли уже такой OrderItem с тем же статусом
                 existing_item = OrderItem.objects.filter(
                     name=inventory_name,
                     voting=_voting,
-                    status='pending',  # Проверяем только на pending
+                    status='pending',
                     orders__user=request.user
                 ).first()
 
                 if existing_item:
-                    # Если OrderItem существует и статус pending - увеличиваем количество
                     existing_item.quantity += questions_count
                     existing_item.save()
                     new_order.items.add(existing_item)
                 else:
-                    # Если OrderItem не существует или статус не pending - создаем новый
                     new_item = OrderItem.objects.create(
                         name=inventory_name,
                         quantity=questions_count,
@@ -464,15 +470,13 @@ def add_voting(request):
                         voting=_voting,
                     )
                     new_order.items.add(new_item)
-
-                _voting.questions_number -= questions_count
                 _voting.save()
                 messages.success(request, "Заказ успешно создан.")
                 return redirect('/applications')
 
         except Exception as e:
             messages.error(request, f"Ошибка при создании заказа: {e}")
-            return render(request, 'add_voting.html', context)
+            return render(request, 'add_    voting.html', context)
 
     return render(request, 'add_voting.html', context)
 

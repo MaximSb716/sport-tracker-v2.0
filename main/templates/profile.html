@@ -14,19 +14,20 @@
 <body>
   <div class="profile-container">
     <div class="profile-header">
-        <img src="" alt="Аватар пользователя" class="profile-avatar">
+        <img src="{{ url_to_avatar }}" alt="Аватар пользователя" class="profile-avatar">
         <form method="post" enctype="multipart/form-data" id="avatar-form">
             {% csrf_token %}
             <div class="profile-avatar-actions">
-              {{ form.as_p  }}
+              <!--{{ form.as_p  }}-->
                 <label for="avatar-upload" class="profile-change-avatar">Сменить аватар</label>
                 <input type="file" id="avatar-upload" name="image" style="display: none;" accept="image/*">
                <input type="hidden" name="url_to_avatar" value="{{ url_to_avatar }}">
 
-                 <button type="submit" style="display: none" id="submit-avatar">Отправить</button>
-             </div>
+                <button class="profile-change-avatar" type="button" style="display: none" id="confirm-avatar">Подтвердить</button>
+                 <button class="profile-change-avatar" type="submit" style="display: none" id="submit-avatar">Отправить</button>
+            </div>
             {% if is_admin %}
-            <a class="profile-create" style="margin-left: 80px;" href="{% url 'voting/new' %}">Создать инвентарь</a>
+            <a class="profile-create" style="display: flex; margin-left: -0px; width: 150px;" href="{% url 'voting/new' %}">Создать инвентарь</a>
             {% endif %}
         </form>
       </div>
@@ -39,7 +40,7 @@
             <span class="profile-email">{{ request.user }}</span>
           </li>
         </ul>
-        <h2>Информация о инвентаре</h2>
+          <h2>Информация о инвентаре</h2>
         <ul>
           <div class="button-container">
              <a href="{% url 'view_inventory' %}" class="inventory-button">Просмотр всего инвентаря</a>
@@ -82,12 +83,19 @@
                 const avatarImg = document.querySelector('.profile-avatar');
                 avatarImg.src = e.target.result;
                 avatarBase64 = e.target.result;
+                document.getElementById('confirm-avatar').style.display = 'inline';
+
             };
 
             if (file) {
                 reader.readAsDataURL(file);
             }
         });
+      document.getElementById('confirm-avatar').addEventListener('click', function() {
+                document.getElementById('submit-avatar').style.display = 'inline';
+                document.getElementById('avatar-form').submit();
+            });
+
 
     </script>
 </body>
