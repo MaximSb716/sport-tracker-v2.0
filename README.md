@@ -1,62 +1,80 @@
-The documentation in this tree is in plain text files and can be viewed using
-any text file viewer.
+# Sport Tracker v2.0
 
-To start with project
+![Sport Tracker](https://raw.githubusercontent.com/MaximSb716/sport-tracker-v2.0/70e2be3853984eae9c49cba3b83295333e27e4c3/main/static/img/icon.svg)
 
-Linux (VSC):
-* Скачать архив
-  
-* Установить Python 3.11.4
+Sport Tracker v2.0 - это современное веб-приложение на Django для отслеживания, управления и планировки запупок спортивного инвентаря.
 
-* Открыть в Visual Studio Code
+## 🚀 Функциональность
 
-* В extensions VSC установить Python
+- 👁️ Отслеживание спортивного инвентаря
+- ➕ Добавление позиций инвентаря
+- 🖋️ Редактирование позиций инвентаря
+- 🗃️ Закрепление за пользователями инвентаря
+- 👥 Регистрация и авторизация пользователей
+- 📑 Удобная система отчетности
 
-* Right-click на manage.py, Open in Integrated Terminal
+## 🛠️ Установка и запуск
 
-* Ctrl+Shift+P
+### 1. Клонирование репозитория
+```bash
+git clone https://github.com/your-repo/sport-tracker-v2.0.git
+cd sport-tracker-v2.0
+```
 
-* ``python create eviroment``
+### 2. Переключение на ветку `simple-votings`
+```bash
+git checkout simple-votings
+```
 
-* ``venv``
+### 3. Создание виртуального окружения
+```bash
+python -m venv venv
+source venv/bin/activate  # для Windows: venv\Scripts\activate
+```
 
-* ``Python 3.11.4``
-  
-* Поставить галочки на все поля.
+### 4. Установка зависимостей
+```bash
+pip install -r requirements.txt
+```
 
-* OK
+### 5. Применение миграций
+```bash
+python manage.py migrate
+```
 
-* venv activate ``source .venv/bin/activate``
+### 6. Запуск сервера
+```bash
+python manage.py runserver
+```
 
-* Install Lib ``pip install -r requirements.txt``
-  
-* Make migrations ``python manage.py makemigrations``
+Приложение будет доступно по адресу: [http://127.0.0.1:8000](http://127.0.0.1:8000)
 
-* Apply migrations ``python manage.py migrate``
+## 📂 Структура проекта
 
-* Run server ``python manage.py runserver``
+```bash
+sport-tracker-v2.0/
+├── main/               # Основное приложение
+│   ├── migrations/     # Миграции базы данных
+│   ├── models.py       # Модели данных
+│   ├── views.py        # Логика представлений
+│   ├── urls.py         # Маршруты
+│   └── forms.py        # Формы
+|   └──
+├── manage.py           # Управление Django-проектом
+├── requirements.txt    # Зависимости проекта
+└── README.md           # Описание проекта
+```
 
-* Your project will be in ``127.0.0.1:8000``
+## 📸 Скриншоты
 
-Linux (PyCharm):
-* Скачать архив
-  
-* Установить Python 3.11.4
+### Главная страница
+![Главная](https://via.placeholder.com/800x400?text=Главная+страница)
 
-* Открыть в PyCharm
+### Страница голосования
+![Голосование](https://via.placeholder.com/800x400?text=Страница+голосования)
 
-* Выбрать интерпритатор
-
-* Создать venv
-  
-* Right-click on Terminal
-
-* Install Lib ``pip install Django`` ``pip install Pillow``
-  
-* Make migrations ``python manage.py makemigrations``
-
-* Apply migrations ``python manage.py migrate``
-
-* Run server ``python manage.py runserver``
-
-* Your project will be in ``127.0.0.1:8000``
+## 🤝 Авторы
+- **Сбродов Максим Александрович** - [GitHub](https://github.com/your-profile)
+- **Лахтиков Дмитрий** - [GitHub](https://github.com/your-profile)
+- **Баричев Артем** - [GitHub](https://github.com/your-profile)
+- **Чернилевкий Александр** - [GitHub](https://github.com/your-profile)
