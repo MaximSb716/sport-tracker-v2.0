@@ -5,6 +5,7 @@ body {
     background-color: #f4f4f4;
     color: #333;
 }
+
 input[type=file]::file-selector-button {
   margin-right: 20px;
   border: none;
@@ -16,44 +17,46 @@ input[type=file]::file-selector-button {
   cursor: pointer;
   transition: background .2s ease-in-out;
 }
+
 .inventory-button {
     display: inline-block;
-    padding: 12px 24px; /* Увеличили отступы */
+    padding: 12px 24px;
     font-size: 16px;
-    font-weight: 500; /* Добавили полужирный шрифт */
+    font-weight: 500;
     text-align: center;
     text-decoration: none;
     cursor: pointer;
-    border-radius: 6px; /* Слегка закругленные углы */
+    border-radius: 6px;
     transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
      border: none;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Небольшая тень */
-    white-space: nowrap; /* Запрет переноса текста */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    white-space: nowrap;
 }
 
-/* Стили для кнопки вне Bootstrap */
 .inventory-button:not(.btn) {
-    background-color: #007bff; /* Синий цвет фона */
-    color: #fff; /* Белый цвет текста */
+    background-color: #007bff;
+    color: #fff;
 }
+
 .inventory-button:hover {
-    background-color: #2980b9; /* Более темный синий при наведении */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Тень становится больше */
+    background-color: #2980b9;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .inventory-button:active {
-    background-color: #246994; /* Ещё более темный синий при нажатии */
+    background-color: #246994;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .inventory-button:focus {
     outline: none;
-     box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.3); /*  подсветка при фокусе */
+     box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.3);
 }
 
 input[type=file]::file-selector-button:hover {
   background: #0d45a5;
 }
+
 .profile-container {
     width: 80%;
     max-width: 600px;
@@ -72,6 +75,7 @@ input[type=file]::file-selector-button:hover {
     padding-bottom: 20px;
     border-bottom: 1px solid #ddd;
 }
+
 .profile-create{
     background-color: #00b100;
     color: #fff;
@@ -86,6 +90,7 @@ input[type=file]::file-selector-button:hover {
     text-align: center;
     text-decoration: none;
 }
+
 .profile-avatar {
       width: 120px;
       height: 120px;
@@ -100,6 +105,7 @@ input[type=file]::file-selector-button:hover {
       flex-direction: row;
       display: inline;
 }
+
 .about_us_conteiner {
     max-width: 900px;
     margin: 20px auto;
@@ -109,6 +115,7 @@ input[type=file]::file-selector-button:hover {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     text-align: center;
 }
+
 .exit{
     background-color: #b30000;
     color: #fff;
@@ -122,6 +129,7 @@ input[type=file]::file-selector-button:hover {
     text-align: center;
     text-decoration: none;
 }
+
 .profile-change-avatar {
         background-color: #007bff;
         color: #fff;
@@ -169,33 +177,4 @@ input[type=file]::file-selector-button:hover {
 .profile-info strong {
     font-weight: bold;
     margin-right: 5px;
-}
-
-@media (max-width: 768px) {
-   .profile-container {
-      width: 95%;
-      }
-        .profile-header {
-         flex-direction: column;
-        text-align: center;
-        }
-
-        .profile-avatar {
-         margin-right: 0;
-         margin-bottom: 10px;
-        }
-
-      .profile-info li {
-        flex-direction: column;
-          align-items: flex-start;
-      }
-
-      .profile-info li strong {
-        margin-bottom: 5px;
-      }
-
-        .profile-edit-email,
-        .profile-edit-password {
-          margin-top: 5px;
-      }
 }

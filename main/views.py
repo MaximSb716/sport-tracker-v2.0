@@ -4,20 +4,17 @@ from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth import get_user_model
 from django.shortcuts import redirect, get_object_or_404
 from django.views.decorators.http import require_POST
-from django.db.models import Sum, F
 from collections import defaultdict
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
-from django.db.models import Sum, Max
+from django.db.models import Sum
 from django.contrib import messages
 import shutil
 from django.shortcuts import render
-from django.db.models import Prefetch
 from django.db import transaction
 from django.http import *
 from main.forms import *
 from main.models import *
-# Create your views here.
 
 def index1(request):
     context = {}
@@ -49,7 +46,7 @@ def applications(request):
             formatted_orders.append(order_data)
     else:
         user_items = OrderItem.objects.filter(
-            voting__user_orders__user=request.user
+            inventory__user_orders__user=request.user
         ).exclude(status='approved').exclude(status='rejected').exclude(status='get_from_admin')
         for item in user_items:
             formatted_orders.append({
@@ -70,7 +67,7 @@ def applications(request):
     return render(request, 'applications.html', context)
 
 def catalog(request):
-    categories = Votings.objects.all()
+    categories = Inventory.objects.all()
 
     context = {
         "categories": categories,
@@ -83,10 +80,10 @@ def catalog(request):
         context["is_auth"] = True
     data = []
     for category in categories:
-        directory = f"main/uploads/votings/admin/{category.id}"
+        directory = f"main/uploads/inventorys/admin/{category.id}"
         url_to_header = ""
         if len(os.listdir(directory)) != 0:
-            url_to_header = f"/uploads/votings/admin/{category.id}/{os.listdir(directory)[0]}"
+            url_to_header = f"/uploads/inventorys/admin/{category.id}/{os.listdir(directory)[0]}"
         data.append({"category": category, "url_to_header": url_to_header})
 
 
@@ -141,7 +138,7 @@ def profile(request):
 
     if not request.user.is_superuser:
         user_inventory = OrderItem.objects.filter(
-            voting__user_orders__user=request.user,
+            inventory__user_orders__user=request.user,
             status__in=['approved', 'get_from_admin']
         ).values('name', 'status').annotate(total_quantity=Sum('quantity'))
 
@@ -155,20 +152,6 @@ def profile(request):
         context["user_inventory"] = inventory_list
 
     return render(request, 'profile.html', context)
-
-@csrf_exempt
-def save_avatar(request):
-    pass
-    #if request.method == 'POST':
-    #    data = json.loads(request.body)
-    #    avatar_data = data.get('avatar')
-    #    if avatar_data:
-    #        # 1. Извлекаем данные base64
-    #        format, imgstr = avatar_data.split(';base64,')
-    #        ext = format.split('/')[-1]  # извлекаем расширение файла
-    #        # 2. Декодируем base64
-    #        avatar = ContentFile(base64.b64decode(imgstr), name=f'avatar.{ext}')
-
 
 def sign_up(request):
     """Регистрация пользователя."""
@@ -212,46 +195,23 @@ def sign_out(request):
     logout(request)
     return redirect("/")
 
-def votings(request):
-    if str(request.user) == "AnonymousUser" and False:
-        page = "votings_anon.html"
-    else:
-        page = "votings.html"
-
-    context = {}
-    return render(request, page, context)
-
-def new_voting(request):
+def new_inventory(request):
     context = {"is_auth" : False}
     if request.user.is_authenticated and  request.user.is_authenticated:
         context["is_auth"] = True
         if request.method == "POST":
-            form = NewVotingForm(request.POST, request.FILES)
+            form = NewInventoryForm(request.POST, request.FILES)
             if form.is_valid():
                 print("VALID +", form.cleaned_data)
                 data = form.cleaned_data
-                voting = Votings(
+                inventory = Inventory(
                     author=request.user,
                     name=data.get("about_label"),
                     questions_number=data.get("questions_count"),
-                    type_of_voting=data.get("type_question0")
+                    type_of_inventory=data.get("type_question0")
                 )
-                voting.save()
-                # for i in range(int(data.get("questions_count"))):
-                #     question = Questions(
-                #         voting=voting,
-                #         question=data.get(f"question{i}"),
-                #         type_of_voting=data.get(f"type_question{i}"),
-                #         user_vote_amount=0
-                #     )
-                #     question.save()
-                #     for j in range(int(data.get(f"options_count{i}"))):
-                #         answer = Answers(
-                #             question=question,
-                #             answer=data.get(f"option{i}_{j}")
-                #         )
-                #         answer.save()
-                directory = f"main/uploads/votings/admin/{voting.id}"
+                inventory.save()
+                directory = f"main/uploads/inventorys/admin/{inventory.id}"
                 os.makedirs(directory)
                 f = request.FILES["image"]
                 extension = os.path.splitext(str(f))[1]
@@ -261,59 +221,55 @@ def new_voting(request):
             else:
                 print("INVALID")
         else:
-            context["form"] = NewVotingForm()
-
-    return render(request, "new_voting.html", context)
+            context["form"] = NewInventoryForm()
 
 
-def voting(request):
+    return render(request, "new_inventory.html", context)
+
+
+def inventory(request):
     context = {"IsExist": False}
     id_of_page = request.GET.get("id", None)
     if id_of_page is None:
         return redirect("/catalog")
     try:
-        _voting = get_object_or_404(Votings, id=id_of_page)
+        _inventory = get_object_or_404(Inventory, id=id_of_page)
         context["IsExist"] = True
-        context["about_label"] = _voting.name
-        context["author"] = _voting.author
-        context["questions_number"] = _voting.questions_number
-        context["voting_id"] = _voting.id
-        context["type_of_voting"] = _voting.type_of_voting
+        context["about_label"] = _inventory.name
+        context["author"] = _inventory.author
+        context["questions_number"] = _inventory.questions_number
+        context["inventory_id"] = _inventory.id
+        context["type_of_inventory"] = _inventory.type_of_inventory
         directory = os.path.join('main', 'uploads', 'users', 'admin')
         context["url_to_avatar"] = ""
         if os.path.exists(directory):
             if os.listdir(directory):
                 context["url_to_avatar"] = f"/uploads/users/admin/{os.listdir(directory)[0]}"
 
-        directory = os.path.join('main', 'uploads', 'votings', 'admin', str(_voting.id))
+        directory = os.path.join('main', 'uploads', 'inventorys', 'admin', str(_inventory.id))
         context["url_to_header"] = ""
         if os.path.exists(directory):
             if os.listdir(directory):
-                context["url_to_header"] = f"/uploads/votings/admin/{_voting.id}/{os.listdir(directory)[0]}"
+                context["url_to_header"] = f"/uploads/inventorys/admin/{_inventory.id}/{os.listdir(directory)[0]}"
 
-        # Передаем BASE_DIR в контекст, чтобы использовать его в шаблоне
         context['BASE_DIR'] = BASE_DIR
 
         if request.method == "POST":
-            _voting.name = request.POST.get("about_label")
-            _voting.questions_number = request.POST.get("questions_count")
-            _voting.type_of_voting = request.POST.get("type_question0")
+            _inventory.name = request.POST.get("about_label")
+            _inventory.questions_number = request.POST.get("questions_count")
+            _inventory.type_of_inventory = request.POST.get("type_question0")
 
             if request.FILES.get('image', False):
                 image_file = request.FILES['image']
 
-                # Путь к папке для сохранения картинки (ВНУТРИ main)
-                upload_dir = os.path.join(BASE_DIR, 'main', 'uploads', 'votings', 'admin', str(_voting.id))
-                print(f"Upload directory: {upload_dir}")  # Для отладки пути
+                upload_dir = os.path.join(BASE_DIR, 'main', 'uploads', 'inventorys', 'admin', str(_inventory.id))
+                print(f"Upload directory: {upload_dir}")
 
-                # Создаем папку, если ее нет
                 os.makedirs(upload_dir, exist_ok=True)
 
-                # Полный путь к новому файлу
                 new_file_path = os.path.join(upload_dir, 'header' + os.path.splitext(image_file.name)[1])
-                print(f"New file path: {new_file_path}")  # Для отладки пути
+                print(f"New file path: {new_file_path}")
 
-                # Удаляем все файлы в папке
                 if os.path.exists(upload_dir):
                     for file in os.listdir(upload_dir):
                         file_path = os.path.join(upload_dir, file)
@@ -327,77 +283,65 @@ def voting(request):
                 except Exception as e:
                     print(f"Ошибка при сохранении файла: {e}")
 
-            _voting.save()
+            _inventory.save()
             return redirect("/catalog")
     except Exception as e:
         print(e)
         return HttpResponse("Голосование не найдено или ошибка!")
 
-    return render(request, 'voting.html', context)
+    return render(request, 'inventory.html', context)
 
 
-
-def about_voting(request):
-    context = {}
-    return render(request, 'about_voting.html', context)
-
-
-
-def survey(request):
-    context = {}
-    return render(request, 'survey.html', context)
-
-
-def delete_voting(request):
+def delete_inventory(request):
     context = {
         "IsExist" : False
     }
     id_of_page = request.GET.get("id", "not founded")
     if request.method == "POST" and request.user.is_authenticated:
-        _id = request.POST.get("voting_id")
-        _voting = Votings.objects.filter(id=_id)
-        if (len(_voting) != 0):
+        _id = request.POST.get("inventory_id")
+        _inventory = Inventory.objects.filter(id=_id)
+        if (len(_inventory) != 0):
             if request.user.is_superuser:
-                shutil.rmtree(f"main/uploads/votings/admin/{_voting[0].id}")
-                _voting[0].delete()
+                shutil.rmtree(f"main/uploads/inventorys/admin/{_inventory[0].id}")
+                _inventory[0].delete()
         return redirect("/catalog")
 
     elif (id_of_page != "not founded"):
-        _voting = Votings.objects.filter(id=id_of_page)
-        if (len(_voting) != 0):
-            if (_voting[0].author != request.user):
+        _inventory = Inventory.objects.filter(id=id_of_page)
+        if (len(_inventory) != 0):
+            if (_inventory[0].author != request.user):
                 return redirect("/catalog")
             context["IsExist"] = True
-            context["about_label"] = _voting[0].name
-            context["author"] = _voting[0].author
-            context['questions_number'] = _voting[0].questions_number
-            context["voting_id"] = _voting[0].id
+            context["about_label"] = _inventory[0].name
+            context["author"] = _inventory[0].author
+            context['questions_number'] = _inventory[0].questions_number
+            context["inventory_id"] = _inventory[0].id
             directory = f"main/uploads/users/admin"
             context["url_to_avatar"] = f"/uploads/users/admin/{os.listdir(directory)[0]}"
-            directory = f"main/uploads/votings/admin/{_voting[0].id}"
-            context["url_to_header"] = f"/uploads/votings/admin/{_voting[0].id}/{os.listdir(directory)[0]}"
+            directory = f"main/uploads/inventorys/admin/{_inventory[0].id}"
+            context["url_to_header"] = f"/uploads/inventorys/admin/{_inventory[0].id}/{os.listdir(directory)[0]}"
             
         else:
             print("Not Founded")
     else:
         return redirect("/catalog")
     
-    return render(request, 'delete_voting.html', context)
+    return render(request, 'delete_inventory.html', context)
 
 
-def add_voting(request):
+def add_inventory(request):
     context = {"IsExist": False}
     id_of_page = request.GET.get("id", None)
     if id_of_page is None:
         return redirect("/catalog")
 
-    _voting = get_object_or_404(Votings, id=id_of_page)
+    _inventory = get_object_or_404(Inventory, id=id_of_page)
     context["IsExist"] = True
-    context["about_label"] = _voting.name
-    context["author"] = _voting.author
-    context["questions_number"] = _voting.questions_number
-    context["voting_id"] = _voting.id
-    context["type_of_voting"] = _voting.type_of_voting
+    context["about_label"] = _inventory.name
+    context["author"] = _inventory.author
+    context["questions_number"] = _inventory.questions_number
+    context["inventory_id"] = _inventory.id
+    context["type_of_inventory"] = _inventory.type_of_inventory
 
     directory = os.path.join('main', 'uploads', 'users', 'admin')
     context["url_to_avatar"] = ""
@@ -405,54 +349,54 @@ def add_voting(request):
         if os.listdir(directory):
             context["url_to_avatar"] = f"/uploads/users/admin/{os.listdir(directory)[0]}"
 
-    directory = os.path.join('main', 'uploads', 'votings', 'admin', str(_voting.id))
+    directory = os.path.join('main', 'uploads', 'inventorys', 'admin', str(_inventory.id))
     context["url_to_header"] = ""
     if os.path.exists(directory):
         if os.listdir(directory):
-            context["url_to_header"] = f"/uploads/votings/admin/{_voting.id}/{os.listdir(directory)[0]}"
+            context["url_to_header"] = f"/uploads/inventorys/admin/{_inventory.id}/{os.listdir(directory)[0]}"
 
     context['BASE_DIR'] = settings.BASE_DIR
 
     if request.method == 'POST':
 
-        if 'voting_id' not in request.POST:
-            return HttpResponseForbidden("Invalid request: Missing voting ID")
+        if 'inventory_id' not in request.POST:
+            return HttpResponseForbidden("Invalid request: Missing inventory ID")
 
-        voting_id = request.POST.get('voting_id')
+        inventory_id = request.POST.get('inventory_id')
         try:
             questions_count = int(request.POST.get('questions_count', 1))
             if questions_count <= 0:
                 messages.error(request, "Количество должно быть больше 0.")
-                return render(request, 'add_voting.html', context)
-            if questions_count > _voting.questions_number:
+                return render(request, 'add_inventory.html', context)
+            if questions_count > _inventory.questions_number:
                 messages.error(request, "Количество не должно превышать имеющееся.")
-                return render(request, 'add_voting.html', context)
+                return render(request, 'add_inventory.html', context)
         except ValueError:
             messages.error(request, "Указано некорректное количество.")
-            return render(request, 'add_voting.html', context)
+            return render(request, 'add_inventory.html', context)
 
         inventory_name = context["about_label"]
 
-        directory = f"main/uploads/votings/admin/{_voting.id}"
+        directory = f"main/uploads/inventorys/admin/{_inventory.id}"
         url_to_header = ""
         if os.path.exists(directory) and os.listdir(directory):
-            url_to_header = f"/uploads/votings/admin/{_voting.id}/{os.listdir(directory)[0]}"
+            url_to_header = f"/uploads/inventorys/admin/{_inventory.id}/{os.listdir(directory)[0]}"
 
         try:
             with transaction.atomic():
                 existing_order = UserOrder.objects.filter(
                     user=request.user,
-                    voting=_voting
+                    inventory=_inventory
                 ).first()
 
                 if not existing_order:
-                    new_order = UserOrder.objects.create(user=request.user, voting=_voting)
+                    new_order = UserOrder.objects.create(user=request.user, inventory=_inventory)
                 else:
                     new_order = existing_order
 
                 existing_item = OrderItem.objects.filter(
                     name=inventory_name,
-                    voting=_voting,
+                    inventory=_inventory,
                     status='pending',
                     orders__user=request.user
                 ).first()
@@ -467,33 +411,33 @@ def add_voting(request):
                         quantity=questions_count,
                         image_url=url_to_header,
                         status='pending',
-                        voting=_voting,
+                        inventory=_inventory,
                     )
                     new_order.items.add(new_item)
-                _voting.save()
+                _inventory.save()
                 messages.success(request, "Заказ успешно создан.")
                 return redirect('/applications')
 
         except Exception as e:
             messages.error(request, f"Ошибка при создании заказа: {e}")
-            return render(request, 'add_    voting.html', context)
+            return render(request, 'add_inventory.html', context)
 
-    return render(request, 'add_voting.html', context)
+    return render(request, 'add_inventory.html', context)
 
 
 @require_POST
 @login_required
 def submit_inventory(request):
     if request.method == 'POST':
-        voting_id = request.POST.get('voting_id')
-        if not voting_id:
-            messages.error(request, "Invalid request: Missing voting ID")
+        inventory_id = request.POST.get('inventory_id')
+        if not inventory_id:
+            messages.error(request, "Invalid request: Missing inventory ID")
             return redirect('/applications')
 
         try:
             with transaction.atomic():
-                voting_id = int(voting_id)
-                voting = Votings.objects.get(pk=voting_id)
+                inventory_id = int(inventory_id)
+                inventory = Inventory.objects.get(pk=inventory_id)
                 questions_count = int(request.POST.get('questions_count', 1))
                 inventory_name = request.POST.get('inventory_name')
 
@@ -501,30 +445,23 @@ def submit_inventory(request):
                     messages.error(request, "Invalid request: Missing inventory name")
                     return redirect('/applications')
 
-                # Получаем url_to_header из voting
-                directory = f"main/uploads/votings/admin/{voting.id}"
+                directory = f"main/uploads/inventorys/admin/{inventory.id}"
                 url_to_header = ""
                 if os.path.exists(directory) and len(os.listdir(directory)) > 0:
-                    url_to_header = f"/uploads/votings/admin/{voting.id}/{os.listdir(directory)[0]}"
+                    url_to_header = f"/uploads/inventorys/admin/{inventory.id}/{os.listdir(directory)[0]}"
 
-                # Проверка на превышение максимального количества (добавлено при создании или добавлении)
-                if questions_count > voting.questions_number:
+                if questions_count > inventory.questions_number:
                     messages.error(request,
-                                   f"Запрошенное количество ({questions_count}) превышает доступное ({voting.questions_number}).")
+                                   f"Запрошенное количество ({questions_count}) превышает доступное ({inventory.questions_number}).")
                     return redirect('/applications')
 
-                # Получаем или создаем UserOrder для этого голосования
-                order, created = UserOrder.objects.get_or_create(user=request.user, voting=voting)
+                order, created = UserOrder.objects.get_or_create(user=request.user, inventory=inventory)
 
-                # Ищем существующий OrderItem в этом UserOrder
-                existing_item = order.items.filter(name=inventory_name, voting=voting).first()
+                existing_item = order.items.filter(name=inventory_name, inventory=inventory).first()
 
                 if existing_item:
-                    # Проверка при изменении (увеличении или уменьшении)
-                    total_requested_items = sum(item.quantity for item in order.items.all() if item.voting == voting)
-
-                    # Calculate available questions before update
-                    available_quantity = voting.questions_number - (total_requested_items - existing_item.quantity)
+                    total_requested_items = sum(item.quantity for item in order.items.all() if item.inventory == inventory)
+                    available_quantity = inventory.questions_number - (total_requested_items - existing_item.quantity)
 
                     if questions_count > available_quantity:
                         messages.error(request,
@@ -532,18 +469,15 @@ def submit_inventory(request):
                         return redirect('/applications')
 
                     existing_item.quantity += questions_count
-
-                    # Добавленная проверка для вычитания
                     if existing_item.quantity < 0:
                         messages.error(request, "Нельзя уменьшить количество ниже 0.")
                         return redirect('/applications')
 
-                    existing_item.save()  # Сохраняем изменения
+                    existing_item.save()
                 else:
-                    # Создаем новый OrderItem, если его нет
                     item = OrderItem.objects.create(
                         name=inventory_name,
-                        voting=voting,
+                        inventory=inventory,
                         quantity=questions_count,
                         image_url=url_to_header,
                         status='pending'
@@ -552,8 +486,8 @@ def submit_inventory(request):
 
                 return redirect('/applications')
 
-        except Votings.DoesNotExist:
-            messages.error(request, "Invalid request: Voting not found")
+        except Inventory.DoesNotExist:
+            messages.error(request, "Invalid request: inventory not found")
             return redirect('/applications')
         except ValueError:
             messages.error(request, "Invalid request: Invalid questions_count")
@@ -576,15 +510,15 @@ def approve_item(request):
                 if item.orders.first():
                     user_name = item.orders.first().user.username
 
-                status = 'used'  # Статус по умолчанию
-                if item.voting and item.voting.type_of_voting:  # Если есть голосование и тип голосования
-                    status = item.voting.type_of_voting
+                status = 'used'
+                if item.inventory and item.inventory.type_of_inventory:
+                    status = item.inventory.type_of_inventory
 
-                if item.voting:
-                    if item.voting.questions_number >= item.quantity:
+                if item.inventory:
+                    if item.inventory.questions_number >= item.quantity:
                         item.status = 'approved'
-                        item.voting.questions_number -= item.quantity
-                        item.voting.save()
+                        item.inventory.questions_number -= item.quantity
+                        item.inventory.save()
                         item.save()
 
                         UsageReport.objects.create(
@@ -646,7 +580,7 @@ def secure_inventory(request):
 def user_detail(request, user_id):
     """Обработка кнопки "Выдать инвентарь" для пользователя."""
     user = get_object_or_404(User, id=user_id)
-    categories = Votings.objects.all()
+    categories = Inventory.objects.all()
 
     context = {
         "categories": categories,
@@ -659,10 +593,10 @@ def user_detail(request, user_id):
         context["is_auth"] = True
     data = []
     for category in categories:
-        directory = f"main/uploads/votings/admin/{category.id}"
+        directory = f"main/uploads/inventorys/admin/{category.id}"
         url_to_header = ""
         if len(os.listdir(directory)) != 0:
-            url_to_header = f"/uploads/votings/admin/{category.id}/{os.listdir(directory)[0]}"
+            url_to_header = f"/uploads/inventorys/admin/{category.id}/{os.listdir(directory)[0]}"
         data.append({"category": category, "url_to_header": url_to_header})
 
     context["data"] = data
@@ -672,75 +606,69 @@ def user_detail(request, user_id):
 
 
 @login_required
-def issue_inventory(request, user_id, voting_id, item_name):
+def issue_inventory(request, user_id, inventory_id, item_name):
     """Выдает инвентарь выбранному пользователю."""
     user = get_object_or_404(User, id=user_id)
-    voting = get_object_or_404(Votings, id=voting_id)
+    inventory = get_object_or_404(Inventory, id=inventory_id)
 
-    directory = f"main/uploads/votings/admin/{voting.id}"
+    directory = f"main/uploads/inventorys/admin/{inventory.id}"
     url_to_header = ""
     if os.path.exists(directory) and os.listdir(directory):
-        url_to_header = f"/uploads/votings/admin/{voting.id}/{os.listdir(directory)[0]}"
+        url_to_header = f"/uploads/inventorys/admin/{inventory.id}/{os.listdir(directory)[0]}"
 
     if request.method == 'POST':
         quantity_str = request.POST.get('quantity')
         if not quantity_str:
            messages.error(request, "Необходимо указать количество.")
-           return render(request, 'issue_inventory.html', {'user': user, 'voting': voting, 'url_to_header': url_to_header})
+           return render(request, 'issue_inventory.html', {'user': user, 'inventory': inventory, 'url_to_header': url_to_header})
         try:
             quantity = int(quantity_str)
         except ValueError:
             messages.error(request, "Указано некорректное количество.")
-            return render(request, 'issue_inventory.html', {'user': user, 'voting': voting, 'url_to_header': url_to_header})
+            return render(request, 'issue_inventory.html', {'user': user, 'inventory': inventory, 'url_to_header': url_to_header})
 
         if quantity <= 0:
             messages.error(request, "Количество должно быть больше 0.")
-            return render(request, 'issue_inventory.html', {'user': user, 'voting': voting, 'url_to_header': url_to_header})
+            return render(request, 'issue_inventory.html', {'user': user, 'inventory': inventory, 'url_to_header': url_to_header})
 
 
         try:
             with transaction.atomic():
-                 # Проверяем, есть ли у пользователя заказ для этого голосования
-                user_order = UserOrder.objects.filter(user=user, voting=voting).first()
+                user_order = UserOrder.objects.filter(user=user, inventory=inventory).first()
 
                 if not user_order:
-                    # Если нет, создаем новый
-                     user_order = UserOrder.objects.create(user=user, voting=voting)
+                     user_order = UserOrder.objects.create(user=user, inventory=inventory)
 
-                 # Проверяем, существует ли уже такой же OrderItem с соответствующим статусом
                 existing_item = OrderItem.objects.filter(
                     name=item_name,
-                    voting=voting,
+                    inventory=inventory,
                     status='get_from_admin',
                     orders__user=user
                 ).first()
 
                 if existing_item:
-                 # Если OrderItem существует, увеличиваем количество
                     existing_item.quantity += quantity
                     existing_item.save()
                 else:
-                # Если такого OrderItem нет, создаем новый с get_from_admin
                    new_item = OrderItem.objects.create(
                        name=item_name,
                        quantity=quantity,
                        image_url=url_to_header,
                        status='get_from_admin',
-                       voting=voting,
+                       inventory=inventory,
                    )
                    user_order.items.add(new_item)
 
 
 
-                voting.questions_number -= quantity
-                voting.save()
+                inventory.questions_number -= quantity
+                inventory.save()
 
-               # Добавляем запись в UsageReport
                 UsageReport.objects.create(
                    item_name=item_name,
                    user_name=user.username,
                    quantity=quantity,
-                    status=voting.type_of_voting
+                    status=inventory.type_of_inventory
                   )
 
 
@@ -751,14 +679,14 @@ def issue_inventory(request, user_id, voting_id, item_name):
             pass
 
 
-    context = {'user': user, 'voting': voting, 'url_to_header': url_to_header}
+    context = {'user': user, 'inventory': inventory, 'url_to_header': url_to_header}
     return render(request, 'issue_inventory.html', context)
 
 
 def view_inventory(request):
     """Отображает информацию о текущем инвентаре, суммируя по пользователю, названию и статусу."""
 
-    order_items = OrderItem.objects.filter(status__in=['get_from_admin', 'approved']).select_related('voting').order_by('name')
+    order_items = OrderItem.objects.filter(status__in=['get_from_admin', 'approved']).select_related('inventory').order_by('name')
 
     grouped_items = defaultdict(lambda: {'total_quantity': 0, 'user': set(), 'status': None})
 
@@ -779,15 +707,15 @@ def view_inventory(request):
             'status_prep': 'Невозможно отслеживать'
             })
 
-    votings = Votings.objects.all()
+    inventorys = Inventory.objects.all()
 
-    for item in votings:
+    for item in inventorys:
         inventory.append({
             'user': 'admin',
             'name': item.name,
             'total_quantity': item.questions_number,
             'status_display': 'Находится в собственности админа',
-            'status_prep': item.type_of_voting
+            'status_prep': item.type_of_inventory
         })
 
     context = {
@@ -835,7 +763,7 @@ def view_reports(request):
     """
     Отображает отчеты об использовании предметов
     """
-    reports = UsageReport.objects.all()  # получение отчетов из базы данных
+    reports = UsageReport.objects.all()
 
     context = {
         'reports': reports

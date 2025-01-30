@@ -42,7 +42,7 @@
                 <h1>Выдача инвентаря</h1>
                 <form method="post">
                     {% csrf_token %}
-                    <input type="hidden" name="voting_id" value="{{ voting.id }}">
+                    <input type="hidden" name="inventory_id" value="{{ inventory.id }}">
                     <div>
                         <p><b>Пользователь:</b> {{user.username}}</p>
                         <p><b>Инвентарь:</b> {{ voting.name }}</p>

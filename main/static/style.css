@@ -5,16 +5,19 @@
 html {
     font-family: Roboto;
 }
+
 .main_img{
     width: 500px;
     height: 500px;
     margin-left: 100px;
     margin-top: -90px;
 }
+
 .info_sl{
     display: flex;
     width: 160vh;
 }
+
 body {
     margin: 0;
     font-family: 'Roboto', sans-serif;
@@ -23,13 +26,16 @@ body {
     min-height: 100vh;
     background-color: #ffffff;
 }
+
 .about_us_conteiner{
     margin-top: 400px;
 }
+
 .body_main{
     margin-left: 5%;
     margin-top:3%;
 }
+
 .info_main{
     margin-bottom: 14px;
     font-size: 28px;

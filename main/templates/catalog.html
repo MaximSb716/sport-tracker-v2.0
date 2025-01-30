@@ -34,18 +34,18 @@
           <div class="card">
             <h3>Наименование: {{category.category.name}}</h3>
             <p>{{category.category.questions_number }} шт.</p>
-             {% if category.category.type_of_voting == "one" %}
+             {% if category.category.type_of_inventory == "one" %}
                 <p>Состояние: Новый</p>
-              {% elif category.category.type_of_voting == "multi" %}
+              {% elif category.category.type_of_inventory == "multi" %}
                 <p>Состояние: Использованный</p>
               {% else %}
                 <p>Состояние: Сломанный</p>
               {% endif %}
               {% csrf_token %}
               {% if is_admin %}
-                  <a class="card_link" href="{% url 'voting'%}?id={{category.category.id}}">Изменить</a>
+                  <a class="card_link" href="{% url 'inventory'%}?id={{category.category.id}}">Изменить</a>
               {% elif is_auth %}
-                  <a class="card_link" href="{% url 'add_voting'%}?id={{category.category.id}}">Добавить в заявку</a>
+                  <a class="card_link" href="{% url 'add_inventory'%}?id={{category.category.id}}">Добавить в заявку</a>
               {% else %}
                   <a class="card_link" href="{% url 'sign_in' %}">Чтобы сделать запрос, зайдите в аккаунт</a>
               {% endif %}

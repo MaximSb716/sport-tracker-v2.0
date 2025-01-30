@@ -44,18 +44,6 @@ body {
     background-color: #c4c4c4;
 }
 
-.img-first {
-
-}
-
-.img-second {
-
-}
-
-.img-third {
-
-}
-
 .card {
     padding: 20px;
     display: flex;
@@ -87,18 +75,6 @@ body {
     transition: background-color 0.3s ease;
 }
 
-@media (max-width: 768px) {
-    body {
-        padding: 10px;
-    }
-    .container {
-      padding: 0 10px;
-    }
-    .item {
-         flex: 1 1 100%;
-    }
-
-}
 .question {
     margin-bottom: 20px;
 }
