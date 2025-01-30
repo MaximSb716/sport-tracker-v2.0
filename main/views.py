@@ -15,7 +15,6 @@ from django.db import transaction
 from django.http import *
 from main.forms import *
 from main.models import *
-# Create your views here.
 
 def index1(request):
     context = {}
@@ -154,20 +153,6 @@ def profile(request):
 
     return render(request, 'profile.html', context)
 
-@csrf_exempt
-def save_avatar(request):
-    pass
-    #if request.method == 'POST':
-    #    data = json.loads(request.body)
-    #    avatar_data = data.get('avatar')
-    #    if avatar_data:
-    #        # 1. Извлекаем данные base64
-    #        format, imgstr = avatar_data.split(';base64,')
-    #        ext = format.split('/')[-1]  # извлекаем расширение файла
-    #        # 2. Декодируем base64
-    #        avatar = ContentFile(base64.b64decode(imgstr), name=f'avatar.{ext}')
-
-
 def sign_up(request):
     """Регистрация пользователя."""
     if request.method == "POST":
@@ -226,20 +211,6 @@ def new_inventory(request):
                     type_of_inventory=data.get("type_question0")
                 )
                 inventory.save()
-                # for i in range(int(data.get("questions_count"))):
-                #     question = Questions(
-                #         inventory=inventory,
-                #         question=data.get(f"question{i}"),
-                #         type_of_inventory=data.get(f"type_question{i}"),
-                #         user_vote_amount=0
-                #     )
-                #     question.save()
-                #     for j in range(int(data.get(f"options_count{i}"))):
-                #         answer = Answers(
-                #             question=question,
-                #             answer=data.get(f"option{i}_{j}")
-                #         )
-                #         answer.save()
                 directory = f"main/uploads/inventorys/admin/{inventory.id}"
                 os.makedirs(directory)
                 f = request.FILES["image"]
@@ -281,7 +252,6 @@ def inventory(request):
             if os.listdir(directory):
                 context["url_to_header"] = f"/uploads/inventorys/admin/{_inventory.id}/{os.listdir(directory)[0]}"
 
-        # Передаем BASE_DIR в контекст, чтобы использовать его в шаблоне
         context['BASE_DIR'] = BASE_DIR
 
         if request.method == "POST":
@@ -292,18 +262,14 @@ def inventory(request):
             if request.FILES.get('image', False):
                 image_file = request.FILES['image']
 
-                # Путь к папке для сохранения картинки (ВНУТРИ main)
                 upload_dir = os.path.join(BASE_DIR, 'main', 'uploads', 'inventorys', 'admin', str(_inventory.id))
-                print(f"Upload directory: {upload_dir}")  # Для отладки пути
+                print(f"Upload directory: {upload_dir}")
 
-                # Создаем папку, если ее нет
                 os.makedirs(upload_dir, exist_ok=True)
 
-                # Полный путь к новому файлу
                 new_file_path = os.path.join(upload_dir, 'header' + os.path.splitext(image_file.name)[1])
-                print(f"New file path: {new_file_path}")  # Для отладки пути
+                print(f"New file path: {new_file_path}")
 
-                # Удаляем все файлы в папке
                 if os.path.exists(upload_dir):
                     for file in os.listdir(upload_dir):
                         file_path = os.path.join(upload_dir, file)
@@ -479,29 +445,22 @@ def submit_inventory(request):
                     messages.error(request, "Invalid request: Missing inventory name")
                     return redirect('/applications')
 
-                # Получаем url_to_header из inventory
                 directory = f"main/uploads/inventorys/admin/{inventory.id}"
                 url_to_header = ""
                 if os.path.exists(directory) and len(os.listdir(directory)) > 0:
                     url_to_header = f"/uploads/inventorys/admin/{inventory.id}/{os.listdir(directory)[0]}"
 
-                # Проверка на превышение максимального количества (добавлено при создании или добавлении)
                 if questions_count > inventory.questions_number:
                     messages.error(request,
                                    f"Запрошенное количество ({questions_count}) превышает доступное ({inventory.questions_number}).")
                     return redirect('/applications')
 
-                # Получаем или создаем UserOrder для этого голосования
                 order, created = UserOrder.objects.get_or_create(user=request.user, inventory=inventory)
 
-                # Ищем существующий OrderItem в этом UserOrder
                 existing_item = order.items.filter(name=inventory_name, inventory=inventory).first()
 
                 if existing_item:
-                    # Проверка при изменении (увеличении или уменьшении)
                     total_requested_items = sum(item.quantity for item in order.items.all() if item.inventory == inventory)
-
-                    # Calculate available questions before update
                     available_quantity = inventory.questions_number - (total_requested_items - existing_item.quantity)
 
                     if questions_count > available_quantity:
@@ -510,15 +469,12 @@ def submit_inventory(request):
                         return redirect('/applications')
 
                     existing_item.quantity += questions_count
-
-                    # Добавленная проверка для вычитания
                     if existing_item.quantity < 0:
                         messages.error(request, "Нельзя уменьшить количество ниже 0.")
                         return redirect('/applications')
 
-                    existing_item.save()  # Сохраняем изменения
+                    existing_item.save()
                 else:
-                    # Создаем новый OrderItem, если его нет
                     item = OrderItem.objects.create(
                         name=inventory_name,
                         inventory=inventory,
@@ -554,8 +510,8 @@ def approve_item(request):
                 if item.orders.first():
                     user_name = item.orders.first().user.username
 
-                status = 'used'  # Статус по умолчанию
-                if item.inventory and item.inventory.type_of_inventory:  # Если есть голосование и тип голосования
+                status = 'used'
+                if item.inventory and item.inventory.type_of_inventory:
                     status = item.inventory.type_of_inventory
 
                 if item.inventory:
@@ -678,14 +634,11 @@ def issue_inventory(request, user_id, inventory_id, item_name):
 
         try:
             with transaction.atomic():
-                 # Проверяем, есть ли у пользователя заказ для этого голосования
                 user_order = UserOrder.objects.filter(user=user, inventory=inventory).first()
 
                 if not user_order:
-                    # Если нет, создаем новый
                      user_order = UserOrder.objects.create(user=user, inventory=inventory)
 
-                 # Проверяем, существует ли уже такой же OrderItem с соответствующим статусом
                 existing_item = OrderItem.objects.filter(
                     name=item_name,
                     inventory=inventory,
@@ -694,11 +647,9 @@ def issue_inventory(request, user_id, inventory_id, item_name):
                 ).first()
 
                 if existing_item:
-                 # Если OrderItem существует, увеличиваем количество
                     existing_item.quantity += quantity
                     existing_item.save()
                 else:
-                # Если такого OrderItem нет, создаем новый с get_from_admin
                    new_item = OrderItem.objects.create(
                        name=item_name,
                        quantity=quantity,
@@ -713,7 +664,6 @@ def issue_inventory(request, user_id, inventory_id, item_name):
                 inventory.questions_number -= quantity
                 inventory.save()
 
-               # Добавляем запись в UsageReport
                 UsageReport.objects.create(
                    item_name=item_name,
                    user_name=user.username,
@@ -813,7 +763,7 @@ def view_reports(request):
     """
     Отображает отчеты об использовании предметов
     """
-    reports = UsageReport.objects.all()  # получение отчетов из базы данных
+    reports = UsageReport.objects.all()
 
     context = {
         'reports': reports

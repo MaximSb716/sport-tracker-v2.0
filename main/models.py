@@ -8,7 +8,7 @@ from django.db.models.signals import post_save
 
 def get_image_upload_path(instance, filename):
     """Создает путь к файлу изображения для конкретного голосования."""
-    ext = filename.split('.')[-1]  # получаем расширение файла
+    ext = filename.split('.')[-1]
     unique_name = f"header.png"
     return os.path.join('main', 'uploads', 'inventorys', 'admin', str(instance.id), unique_name)
 
@@ -30,13 +30,13 @@ class Inventory(models.Model):
     def save(self, *args, **kwargs):
         """Переопределяем метод save чтобы сохранять картинки в нужный путь."""
         if self.pk is None:
-            super().save(*args, **kwargs)  # если объект новый
+            super().save(*args, **kwargs)
             return
 
         if self.image:
             old_inventory = Inventory.objects.get(pk=self.pk)
             if old_inventory.image and old_inventory.image != self.image:
-                if os.path.isfile(old_inventory.image.path):  # удаляем старую картинку, если она есть
+                if os.path.isfile(old_inventory.image.path):
                     os.remove(old_inventory.image.path)
         super().save(*args, **kwargs)
 

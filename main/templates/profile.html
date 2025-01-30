@@ -18,7 +18,6 @@
         <form method="post" enctype="multipart/form-data" id="avatar-form">
             {% csrf_token %}
             <div class="profile-avatar-actions">
-              <!--{{ form.as_p  }}-->
                 <label for="avatar-upload" class="profile-change-avatar">Сменить аватар</label>
                 <input type="file" id="avatar-upload" name="image" style="display: none;" accept="image/*">
                <input type="hidden" name="url_to_avatar" value="{{ url_to_avatar }}">

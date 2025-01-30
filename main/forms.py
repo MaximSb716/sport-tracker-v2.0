@@ -21,7 +21,7 @@ class SignInForm(AuthenticationForm):
         super().__init__(*args, **kwargs)
         self.fields["username"].widget.attrs.update(
             {"class": "login"}
-        )  # Добавляем класс
+        )
         self.fields["password"].widget.attrs.update({"class": "password"})
 
 
@@ -56,27 +56,6 @@ class NewInventoryForm(forms.Form):
                 if not len(cleaned_data.get(f"option{i}_{j}")) <= 70:
                     print(f"Недопустимое содержание ответа {i}_{j}!")
                     raise ValidationError(f"Недопустимое содержание ответа {i}_{j}!")
-
-
-# class VotingForm(forms.Form):
-#     """Форма с голосом пользователя"""
-#
-#     def __init__(self, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
-#
-#     def clean(self):
-#         cleaned_data = super().clean()
-#
-#         voting = Votings.objects.filter(id=self.data.POST["voting_id"])
-#         if len(voting) == 0:
-#             print("Голосование не найдено!")
-#             raise ValidationError("Голосование не найдено!")
-#
-#         cleaned_data["voting_id"] = voting[0].id
-#         questions = Questions.objects.filter(voting=voting[0])
-#         cleaned_data["questions"] = "questions"
-#         data = dict(self.data.POST)
-#         cleaned_data["answers"] = []
 
 class UploadImageForm(forms.Form):
     """Форма для загрузки изображений"""

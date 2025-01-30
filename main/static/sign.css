@@ -1,12 +1,11 @@
 body {
     margin: 0;
     font-family: 'Roboto', sans-serif;
-    background-color: #f0f2f5; /* Светло-серый фон */
+    background-color: #f0f2f5;
     justify-content: center;
     align-items: center;
 }
 
-/* Контейнер для формы регистрации */
 .registration-box1 {
     background-color: #ffffff;
     padding: 40px;
@@ -14,11 +13,10 @@ body {
     margin-top: 10%;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    width: 350px; /* Фиксированная ширина контейнера */
+    width: 350px;
     text-align: center;
 }
 
-/* Заголовок формы */
 .registration-box1 h1 {
     margin-bottom: 30px;
     color: #333;
@@ -26,7 +24,6 @@ body {
     font-weight: 700;
 }
 
-/* Стили для label */
 .registration-box1 label {
     display: block;
     margin-bottom: 5px;
@@ -36,6 +33,7 @@ body {
     font-weight: 500;
     font-size: 1em;
 }
+
 .registration-box1 span {
     color: #555;
     font-size: 13px;
@@ -99,16 +97,4 @@ body {
 
 .registration-button:hover {
     background-color: #0056b3;
-}
-
-@media (max-width: 480px) {
-   .registration-box1 {
-      width: 90%;
-        padding: 30px;
-    }
-
-   .registration-box1 h1 {
-     font-size: 1.8em;
-        margin-bottom: 20px;
-    }
 }
