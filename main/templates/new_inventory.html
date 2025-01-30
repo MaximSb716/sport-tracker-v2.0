@@ -1,0 +1,59 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" xmlns="" xmlns="">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'header.css' %}">
+    <link rel="stylesheet" href="{% static 'new_inventory.css' %}">
+    <title>Создать инвентарь</title>
+    <link rel="icon" href="{% static 'img/icon.svg' %}" type="image/svg+xml">
+</head>
+{% include 'header.html' %}
+{% if is_auth %}
+<body>
+    <div class="about_us_conteiner">
+        <h1>Создание инвентаря</h1>
+        <form action="/inventory/new" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div>
+                <p><b>Напишите заголовок инвентаря</b></p>
+                <input type="text" name="about_label" maxlength="100" required id="id_about_label">
+            </div>
+            <div>
+                <p><b>Добавьте изображение</b></p>
+                <input type="file" name="image" required id="id_image" accept="image/*">
+            </div>
+            <div>
+                <p><b>Выберите колличество инвентаря</b></p>
+                <input type="number" name="questions_count" required id="id_questions_count" min="1" max="100" onchange="OnChangeQuestionsCount()" value="1">
+            </div>
+            <div id="Questions">
+                <div id="Question0">
+                    <div>
+                        <p><b>Выберите состояние</b></p>
+                        <input type="radio" name="type_question0" maxlength="500" required value="one" id="one" checked>
+                        <label for="one">Новый</label>
+                        <input type="radio" name="type_question0" maxlength="500" required value="multi" id="multi">
+                        <label for="multi">Использованный</label>
+                        <input type="radio" name="type_question0" maxlength="500" required value="end" id="end">
+                        <label for="end">Сломанный</label>
+                    </div>
+                </div>
+            </div>
+
+            <input type="submit" value="Подтвердить">
+        </form>
+    </div>
+</body>
+{% else %}
+<body>
+    <div class="about_us_conteiner">
+        <h1>Создай своё голосование!</h1>
+        <h2>Для создания своего голосования нужно зарегистрироваться!</h2>
+        <a href="{% url 'sign_in' %}">Войти</a>
+        <a href="{% url 'sign_up' %}">Зарегистрироваться</a>
+    </div>
+</body>
+{% endif %}
+</html>
