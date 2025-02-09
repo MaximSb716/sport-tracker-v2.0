@@ -25,11 +25,13 @@ python -m venv venv
 source venv/bin/activate
 ```
 ### 2. Создание виртуального окружения(Visual Studio Code)
+```
 ctrl+shift+p
 create environment
 .venv
 Выбрать python
 Выбрать requirements.txt
+```
 
 ### 3. Установка зависимостей
 ```bash
