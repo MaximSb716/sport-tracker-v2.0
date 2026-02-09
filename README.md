@@ -92,8 +92,5 @@ https://vkvideo.ru/video849850570_456239017
 ## Схема базы данных
 https://www.drawdb.app/editor?shareId=1c2c14f657dc9996833f341d61256f6b
 
-## 🤝 Авторы
+## 🤝 Автор
 - **Сбродов Максим Александрович** - [GitHub](https://github.com/MaximSb716)
-- **Барычев Артем Антонович** - [GitHub](https://github.com/Artem2062)
-- **Лахтиков Дмитрий Александрович** - [GitHub](https://github.com/Lahtikov)
-- **Чернилевкий Александр Сергеевич** - [GitHub](https://github.com/ALEKSANDR7899)
